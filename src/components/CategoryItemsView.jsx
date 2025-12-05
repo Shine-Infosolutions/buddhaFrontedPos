@@ -146,7 +146,7 @@ export default function CategoryItemsView({ selectedCategory }) {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Customer Inputs */}
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -163,61 +163,52 @@ export default function CategoryItemsView({ selectedCategory }) {
           </div>
         </div>
 
+        {/* Add Item Button */}
+        <div className="text-center mb-6">
+          <button 
+            onClick={() => setShowCreateItem(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Add Another Item
+          </button>
+        </div>
+
         {/* Items Display */}
         {items.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {items.map((item) => (
-              <div key={item._id} className="bg-white rounded-lg p-4 shadow-sm border">
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg">{item.itemName}</h3>
-                    <p className="text-gray-600">Available: {item.qty}</p>
-                    <p className="font-bold text-green-600 text-xl">₹{item.price}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) - 1)}
-                        className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-medium">{itemQuantities[item._id] || 1}</span>
-                      <button
-                        onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) + 1)}
-                        className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => handleAddToOrder(item)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                    >
-                      Add to Order
-                    </button>
-                  </div>
+              <div key={item._id} className="bg-white rounded-lg p-4 shadow-sm border text-center">
+                <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName}</h3>
+                <p className="font-bold text-yellow-600 text-2xl mb-4">₹{item.price}</p>
+                
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <button
+                    onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) - 1)}
+                    className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
+                  >
+                    -
+                  </button>
+                  <span className="w-8 text-center font-medium">{itemQuantities[item._id] || 1}</span>
+                  <button
+                    onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) + 1)}
+                    className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
+                  >
+                    +
+                  </button>
                 </div>
+                
+                <button
+                  onClick={() => handleAddToOrder(item)}
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  ADD TO ORDER
+                </button>
               </div>
             ))}
-            <div className="text-center">
-              <button 
-                onClick={() => setShowCreateItem(true)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                Add Another Item
-              </button>
-            </div>
           </div>
         ) : (
           <div className="bg-white rounded-lg p-8 text-center shadow-sm">
             <div className="text-gray-500 text-lg mb-6">No items found in this category</div>
-            <button 
-              onClick={() => setShowCreateItem(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Create Item
-            </button>
           </div>
         )}
 
