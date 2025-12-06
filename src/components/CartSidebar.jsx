@@ -9,9 +9,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderMessage, setOrderMessage] = useState('');
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = Math.round(subtotal * 0.18); // 18% GST
-  const total = subtotal + tax;
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handlePlaceOrder = () => {
     if (cart.length === 0) return;
@@ -136,15 +134,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
         {cart.length > 0 && (
           <div className="bg-white border-t border-gray-200 p-4 space-y-3">
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tax (18%)</span>
-                <span>₹{tax}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-gray-800 pt-1 border-t border-gray-200">
+              <div className="flex justify-between text-base font-bold text-gray-800">
                 <span>Total</span>
                 <span className="text-yellow-600">₹{total}</span>
               </div>
@@ -291,15 +281,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
         {cart.length > 0 && (
           <div className="bg-white border-t border-gray-200 p-4 space-y-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Tax (18%)</span>
-                <span>₹{tax}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
+              <div className="flex justify-between text-lg font-bold text-gray-800">
                 <span>Total</span>
                 <span className="text-yellow-600">₹{total}</span>
               </div>

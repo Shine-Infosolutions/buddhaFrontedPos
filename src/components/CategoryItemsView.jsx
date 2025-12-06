@@ -16,6 +16,7 @@ export default function CategoryItemsView({ selectedCategory }) {
   const [itemQuantities, setItemQuantities] = useState({});
 
   const [categories, setCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -176,20 +177,27 @@ export default function CategoryItemsView({ selectedCategory }) {
         </div>
 
 
-        {/* Add Item Button */}
-        <div className="text-center mb-4 md:mb-6">
-          <button 
-            onClick={() => setShowCreateItem(true)}
-            className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Add Another Item
-          </button>
+
+
+        {/* Search Bar */}
+        <div className="px-4 md:px-6 mb-4">
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+          />
         </div>
 
         {/* Items Display */}
-        {items.length > 0 ? (
+        {items.filter(item => 
+          item.itemName?.toLowerCase().includes(searchQuery.toLowerCase())
+        ).length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-0">
-            {items.map((item) => (
+            {items.filter(item => 
+              item.itemName?.toLowerCase().includes(searchQuery.toLowerCase())
+            ).map((item) => (
               <div key={item._id} className="bg-white rounded-lg p-4 shadow-sm border text-center">
                 <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName?.replace(/"/g, '')}</h3>
                 <p className="font-bold text-yellow-600 text-2xl mb-4">₹{item.price}</p>
