@@ -4,7 +4,7 @@ import logoImg from '../assets/buddha-logo.png';
 
 export default function Sidebar({ currentPage, onPageChange, selectedCategory, onCategorySelect, isMobile, onClose }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(true);
   const { categories: dynamicCategories } = usePosContext();
 
   const categories = [

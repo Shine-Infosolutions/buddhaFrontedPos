@@ -17,9 +17,11 @@ export default function CategoryItemsView({ selectedCategory }) {
 
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [catsRes, itemsRes] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_URL}/categories`),
@@ -49,6 +51,8 @@ export default function CategoryItemsView({ selectedCategory }) {
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -179,7 +183,11 @@ export default function CategoryItemsView({ selectedCategory }) {
         </div>
 
         {/* Items Display */}
-        {items.filter(item => 
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+          </div>
+        ) : items.filter(item => 
           item.itemName?.toLowerCase().includes(searchQuery.toLowerCase())
         ).length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-0">
