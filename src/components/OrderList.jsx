@@ -149,6 +149,8 @@ export default function OrderList({ onOpenCart }) {
               padding-bottom: 3mm;
               margin-bottom: 3mm;
             }
+            .logo { width: 20mm; height: 20mm; margin: 0 auto 2mm; }
+            .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
             .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
             .info { margin: 1mm 0; font-size: 11px; }
             .items { margin: 3mm 0; }
@@ -172,6 +174,8 @@ export default function OrderList({ onOpenCart }) {
         </head>
         <body>
           <div class="header">
+            <img src="/buddha-logo.svg" alt="Buddha Logo" class="logo" />
+            <div class="restaurant-name">BUDDHA AVENUE</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
             <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
