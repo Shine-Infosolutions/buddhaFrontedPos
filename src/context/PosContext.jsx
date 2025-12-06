@@ -182,8 +182,10 @@ export function PosProvider({ children }) {
       
       if (!response.ok) throw new Error('Failed to create order');
       
+      const orderData = await response.json();
+      
       dispatch({ type: 'PLACE_ORDER', payload: { notes } });
-      return { success: true, message: 'Order placed successfully!' };
+      return { success: true, message: 'Order placed successfully!', order: orderData };
     } catch (error) {
       console.error('Failed to place order:', error);
       return { success: false, message: 'Failed to place order. Please try again.' };
