@@ -10,7 +10,7 @@ import logoImg from '../assets/buddha-logo.png';
 import { usePosContext } from '../context/PosContext';
 
 export default function ResponsivePOSLayout() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('BEVERAGES');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('pos');

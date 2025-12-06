@@ -19,53 +19,41 @@ export default function CategoryItemsView({ selectedCategory }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`);
-        const data = await response.json();
-        const allCats = Array.isArray(data) ? data : data.data || [];
-        setCategories(allCats);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchItems = async () => {
-      if (!selectedCategory || categories.length === 0) return;
-      
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/items?limit=100`);
-        const data = await response.json();
-        const allItems = Array.isArray(data) ? data : data.data || [];
+        const [catsRes, itemsRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/categories`),
+          fetch(`${import.meta.env.VITE_API_URL}/items?limit=100`)
+        ]);
         
-        const matchedCategory = categories.find(cat => {
+        const catsData = await catsRes.json();
+        const itemsData = await itemsRes.json();
+        
+        const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+        const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+        
+        setCategories(allCats);
+        
+        const matchedCategory = allCats.find(cat => {
           const catName = cat.categoryName?.replace(/"/g, '').toLowerCase();
           const selCat = selectedCategory.replace(/"/g, '').toLowerCase();
           return catName === selCat;
         });
         
-        if (!matchedCategory) {
-          setItems([]);
-          return;
+        if (matchedCategory) {
+          const filteredItems = allItems.filter(item => {
+            const itemCatId = typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId;
+            return itemCatId === matchedCategory._id;
+          });
+          setItems(filteredItems);
         }
-        
-        const filteredItems = allItems.filter(item => {
-          const itemCatId = typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId;
-          return itemCatId === matchedCategory._id;
-        });
-        
-        setItems(filteredItems);
       } catch (error) {
-        console.error('Error fetching items:', error);
-        setItems([]);
+        console.error('Error fetching data:', error);
       }
     };
     
-    fetchItems();
-  }, [selectedCategory, categories]);
+    fetchData();
+  }, [selectedCategory]);
 
   const { customer, updateCustomer } = usePosContext();
 
