@@ -54,6 +54,7 @@ function posReducer(state, action) {
       };
 
     case 'UPDATE_CUSTOMER':
+      console.log('Updating customer:', action.payload);
       return {
         ...state,
         customer: { ...state.customer, ...action.payload }
@@ -154,10 +155,13 @@ export function PosProvider({ children }) {
   const removeFromCart = (id) => dispatch({ type: 'REMOVE_FROM_CART', payload: id });
   const clearCart = () => dispatch({ type: 'CLEAR_CART' });
   const updateCustomer = (data) => dispatch({ type: 'UPDATE_CUSTOMER', payload: data });
-  const placeOrder = async (notes) => {
+  const placeOrder = async (notes, customerInfo) => {
     try {
+      console.log('Current customer state:', state.customer);
       const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const payload = {
+        customerName: state.customer.name || 'Guest',
+        customerMobile: state.customer.mobile || 'N/A',
         items: state.cart.map(item => ({
           itemName: item.name,
           qty: item.quantity,
@@ -167,6 +171,8 @@ export function PosProvider({ children }) {
         totalPrice: totalAmount,
         status: 'Completed'
       };
+
+      console.log('Order Payload:', payload);
 
       const response = await fetch(`${BASE_URL}/orders`, {
         method: 'POST',

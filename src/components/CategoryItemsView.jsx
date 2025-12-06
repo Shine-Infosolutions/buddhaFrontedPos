@@ -66,10 +66,7 @@ export default function CategoryItemsView({ selectedCategory }) {
     fetchItems();
   }, [selectedCategory, categories]);
 
-  const customerInfo = {
-    customerName: 'John Doe',
-    customerMobile: '9876543210'
-  };
+  const { customer, updateCustomer } = usePosContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -164,15 +161,20 @@ export default function CategoryItemsView({ selectedCategory }) {
             <input
               type="text"
               placeholder="Customer Name"
+              value={customer.name}
+              onChange={(e) => updateCustomer({ name: e.target.value })}
               className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             />
             <input
               type="text"
               placeholder="Mobile Number"
+              value={customer.mobile}
+              onChange={(e) => updateCustomer({ mobile: e.target.value })}
               className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             />
           </div>
         </div>
+
 
         {/* Add Item Button */}
         <div className="text-center mb-6">

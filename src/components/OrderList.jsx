@@ -21,34 +21,17 @@ export default function OrderList({ onOpenCart }) {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          limit: limit
-        });
+        let url = `${import.meta.env.VITE_API_URL}/orders?page=${currentPage}&limit=${limit}`;
         
-        if (searchTerm) params.append('search', searchTerm);
+        if (searchTerm && searchTerm.trim()) {
+          url += `&search=${encodeURIComponent(searchTerm.trim())}`;
+        }
         
-        const url = `${import.meta.env.VITE_API_URL}/orders?${params.toString()}`;
-        console.log('=== FETCH DEBUG ===');
-        console.log('Search term:', searchTerm);
-        console.log('Current page:', currentPage);
-        console.log('Limit:', limit);
-        console.log('Params object:', Object.fromEntries(params));
-        console.log('Params string:', params.toString());
-        console.log('Full URL:', url);
-        
+        console.log('Fetching URL:', url);
         const response = await fetch(url);
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
         const data = await response.json();
-        console.log('Raw response data:', data);
-        console.log('Orders array:', data.data);
-        console.log('Orders count:', data.data?.length || 0);
-        console.log('Total pages:', data.totalPages);
-        console.log('Current page from response:', data.page);
+        console.log('Response:', data);
         
-        // Handle different response formats
         if (Array.isArray(data)) {
           setOrders(data);
           setTotalPages(Math.ceil(data.length / limit));
@@ -74,45 +57,8 @@ export default function OrderList({ onOpenCart }) {
     }
   }, [searchTerm]);
 
-  const handleSearch = async () => {
-    console.log('=== MANUAL SEARCH TRIGGERED ===');
-    console.log('Search term:', searchTerm);
-    
-    // Force a re-fetch with current search term
-    try {
-      const params = new URLSearchParams({
-        page: 1,
-        limit: limit
-      });
-      
-      if (searchTerm.trim()) {
-        params.append('search', searchTerm.trim());
-      }
-      
-      const url = `${import.meta.env.VITE_API_URL}/orders?${params.toString()}`;
-      console.log('=== SEARCH DEBUG ===');
-      console.log('Search term (raw):', `"${searchTerm}"`);
-      console.log('Search term (trimmed):', `"${searchTerm.trim()}"`);
-      console.log('Search term length:', searchTerm.length);
-      console.log('Params entries:', [...params.entries()]);
-      console.log('Manual search URL:', url);
-      console.log('Expected URL should be:', `${import.meta.env.VITE_API_URL}/orders?search=mukesh&page=1&limit=10`);
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      console.log('Manual search response:', data);
-      
-      if (Array.isArray(data)) {
-        setOrders(data);
-        setTotalPages(Math.ceil(data.length / limit));
-      } else {
-        setOrders(data.data || data.orders || []);
-        setTotalPages(data.totalPages || 1);
-      }
-      setCurrentPage(1);
-    } catch (error) {
-      console.error('Error searching orders:', error);
-    }
+  const handleSearch = () => {
+    setCurrentPage(1);
   };
 
   const handleCompleteOrder = async (orderId) => {
@@ -156,17 +102,15 @@ export default function OrderList({ onOpenCart }) {
   };
 
   const refreshOrders = async () => {
-    const params = new URLSearchParams({
-      page: currentPage,
-      limit: limit
-    });
+    let url = `${import.meta.env.VITE_API_URL}/orders?page=${currentPage}&limit=${limit}`;
     
-    if (searchTerm) params.append('search', searchTerm);
+    if (searchTerm && searchTerm.trim()) {
+      url += `&search=${encodeURIComponent(searchTerm.trim())}`;
+    }
     
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/orders?${params.toString()}`);
+    const response = await fetch(url);
     const data = await response.json();
     
-    // Handle different response formats
     if (Array.isArray(data)) {
       setOrders(data);
       setTotalPages(Math.ceil(data.length / limit));
@@ -177,61 +121,90 @@ export default function OrderList({ onOpenCart }) {
   };
 
   const handlePrintKOT = (order) => {
-    // Create KOT content
-    const kotContent = `================= KOT =================
-Order ID     : #${order._id || order.orderId || order.id}
-Customer     : ${order.customerName || 'Guest'}
-Mobile       : ${order.customerMobile || 'N/A'}
-Date & Time  : ${order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString()}
-========================================
-ITEMS
-----------------------------------------
-Qty     Item Name                Amount
-----------------------------------------
-${order.items?.map(item => `${item.qty}       ${item.itemName.padEnd(20)}   ${item.price}`).join('\n') || 'No items'}
-----------------------------------------
-Total Amount:                    ${order.totalAmount || order.totalPrice || 0}
-Status      : ${order.status || 'pending'}
-========================================
-Thank you!
-========================================`;
-    
-    // Print KOT
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
-          <title>KOT - Order #${order._id || order.id}</title>
+          <title>KOT</title>
           <style>
             @page { 
               size: 80mm auto; 
-              margin: 4mm; 
+              margin: 2mm; 
+            }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
             }
             body { 
               font-family: 'Courier New', monospace; 
               font-size: 12px; 
-              margin: 0; 
-              padding: 0;
-              width: 72mm;
-              line-height: 1.2;
+              width: 76mm;
+              padding: 2mm;
+              line-height: 1.3;
             }
-            pre { 
-              white-space: pre-wrap; 
-              margin: 0;
-              font-family: inherit;
+            .header {
+              text-align: center;
+              border-bottom: 2px dashed #000;
+              padding-bottom: 3mm;
+              margin-bottom: 3mm;
+            }
+            .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
+            .info { margin: 1mm 0; font-size: 11px; }
+            .items { margin: 3mm 0; }
+            .item-row { 
+              display: flex; 
+              justify-content: space-between; 
+              margin: 1.5mm 0; 
+              font-size: 11px;
+            }
+            .footer {
+              border-top: 2px dashed #000;
+              padding-top: 3mm;
+              margin-top: 3mm;
+              text-align: center;
+              font-size: 11px;
             }
             @media print {
-              body { height: auto !important; }
+              body { width: 76mm; }
             }
           </style>
         </head>
         <body>
-          <pre>${kotContent}</pre>
+          <div class="header">
+            <div class="title">KOT</div>
+            <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
+            <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
+          </div>
+          <div class="info"><strong>Customer:</strong> ${order.customerName || 'Guest'}</div>
+          <div class="info"><strong>Mobile:</strong> ${order.customerMobile || 'N/A'}</div>
+          <div class="items">
+            <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+            ${order.items?.map(item => `
+              <div class="item-row">
+                <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
+                <span>₹${item.price}</span>
+              </div>
+            `).join('') || '<div>No items</div>'}
+            <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+          </div>
+          <div class="item-row" style="font-weight: bold; font-size: 14px;">
+            <span>TOTAL</span>
+            <span>₹${order.totalAmount || order.totalPrice || 0}</span>
+          </div>
+          <div class="footer">
+            <div><strong>Status:</strong> ${order.status || 'pending'}</div>
+            <div style="margin-top: 2mm;">Thank You!</div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() { window.print(); }, 250);
+            };
+          </script>
         </body>
       </html>
     `);
     printWindow.document.close();
-    printWindow.print();
   };
 
   const handleShowOrderDetails = (order) => {

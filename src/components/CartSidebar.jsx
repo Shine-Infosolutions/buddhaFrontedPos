@@ -3,7 +3,7 @@ import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 
 export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavigateToOrders }) {
-  const { cart, updateQuantity, removeFromCart, clearCart, placeOrder } = usePosContext();
+  const { cart, updateQuantity, removeFromCart, clearCart, placeOrder, customer, updateCustomer } = usePosContext();
   const [notes, setNotes] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -20,7 +20,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
 
   const confirmOrder = async () => {
     setIsPlacingOrder(true);
-    const result = await placeOrder(notes);
+    const result = await placeOrder(notes, customer);
     
     setOrderMessage(result.message);
     setIsPlacingOrder(false);
