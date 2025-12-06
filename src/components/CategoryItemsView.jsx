@@ -156,8 +156,8 @@ export default function CategoryItemsView({ selectedCategory }) {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
         {/* Customer Inputs */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
             <input
               type="text"
               placeholder="Customer Name"
@@ -177,10 +177,10 @@ export default function CategoryItemsView({ selectedCategory }) {
 
 
         {/* Add Item Button */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4 md:mb-6">
           <button 
             onClick={() => setShowCreateItem(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Add Another Item
           </button>
@@ -188,7 +188,7 @@ export default function CategoryItemsView({ selectedCategory }) {
 
         {/* Items Display */}
         {items.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-0">
             {items.map((item) => (
               <div key={item._id} className="bg-white rounded-lg p-4 shadow-sm border text-center">
                 <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName?.replace(/"/g, '')}</h3>

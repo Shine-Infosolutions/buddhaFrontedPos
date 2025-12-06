@@ -215,15 +215,15 @@ export default function OrderList({ onOpenCart }) {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Header Section */}
-      <div className="flex-none p-6">
-        <div className="flex justify-between items-center">
+      <div className="flex-none p-4 md:p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">All Orders</h1>
-            <p className="text-gray-600">Manage and track all restaurant orders</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">All Orders</h1>
+            <p className="text-sm md:text-base text-gray-600">Manage and track all restaurant orders</p>
           </div>
           <button
             onClick={() => setShowOrderForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
           >
             Create Order
           </button>
@@ -231,7 +231,7 @@ export default function OrderList({ onOpenCart }) {
       </div>
       
       {/* Search Bar */}
-      <div className="px-6 mb-4">
+      <div className="px-4 md:px-6 mb-4">
         <div className="max-w-md flex gap-2">
           <input
             type="text"
@@ -239,20 +239,78 @@ export default function OrderList({ onOpenCart }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <button
             onClick={handleSearch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
           >
             Search
           </button>
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="flex-1 overflow-y-auto px-6">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* Orders Container */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6">
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {orders && orders.length > 0 ? orders.map((order) => (
+            <div key={order._id || order.id} className="bg-white rounded-lg shadow p-4">
+              <div className="flex justify-between items-start mb-2">
+                <button
+                  onClick={() => handleShowOrderDetails(order)}
+                  className="font-semibold text-blue-600 text-sm"
+                >
+                  #{(order._id || order.id).slice(-8)}
+                </button>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {order.status || 'pending'}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 mb-2">
+                {order.orderDateTime ? new Date(order.orderDateTime).toLocaleString() : order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
+              </div>
+              <div className="text-sm text-gray-700 mb-2">
+                <div>{order.items?.length || 0} items</div>
+                <div className="text-xs text-gray-500">
+                  {order.items?.slice(0, 2).map(item => item.itemName).join(', ')}
+                  {order.items?.length > 2 && '...'}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="text-lg font-bold text-gray-900">₹{order.totalAmount || order.totalPrice || 0}</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePrintKOT(order)}
+                    className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-medium"
+                  >
+                    Print
+                  </button>
+                  <button
+                    onClick={() => handleCancelOrder(order._id || order.id)}
+                    className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-medium"
+                    disabled={order.status === 'cancelled' || order.status === 'completed'}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="bg-white rounded-lg p-8 text-center">
+              <svg className="w-12 h-12 text-gray-300 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-lg font-medium text-gray-500">No orders found</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -332,24 +390,25 @@ export default function OrderList({ onOpenCart }) {
                 )}
               </tbody>
             </table>
+          </div>
         </div>
         
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center space-x-2 py-4">
+          <div className="flex justify-center items-center space-x-1 md:space-x-2 py-4">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 md:px-3 py-1 text-xs md:text-base border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              Prev
             </button>
             
-            {[...Array(totalPages)].map((_, i) => (
+            {[...Array(totalPages)].slice(0, 5).map((_, i) => (
               <button
                 key={i + 1}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 border rounded ${
+                className={`px-2 md:px-3 py-1 text-xs md:text-base border rounded ${
                   currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
                 }`}
               >
@@ -360,7 +419,7 @@ export default function OrderList({ onOpenCart }) {
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 md:px-3 py-1 text-xs md:text-base border rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
