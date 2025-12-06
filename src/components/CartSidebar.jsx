@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 
-export default function CartSidebar({ isOpen, onClose, isDesktop = false }) {
+export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavigateToOrders }) {
   const { cart, updateQuantity, removeFromCart, clearCart, placeOrder } = usePosContext();
   const [notes, setNotes] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -28,6 +28,12 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false }) {
     if (result.success) {
       setNotes('');
       setShowConfirmation(false);
+      
+      // Navigate to orders page immediately
+      if (onNavigateToOrders) {
+        onNavigateToOrders();
+      }
+      
       setTimeout(() => {
         setOrderMessage('');
         if (!isDesktop) onClose();

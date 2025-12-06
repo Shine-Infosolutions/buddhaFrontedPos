@@ -14,34 +14,112 @@ export default function OrderList({ onOpenCart }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [limit, setLimit] = useState(8);
+  const [limit, setLimit] = useState(10);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showItemForm, setShowItemForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const data = await getAllOrders();
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: limit
+        });
+        
+        if (searchTerm) params.append('search', searchTerm);
+        
+        const url = `${import.meta.env.VITE_API_URL}/orders?${params.toString()}`;
+        console.log('=== FETCH DEBUG ===');
+        console.log('Search term:', searchTerm);
+        console.log('Current page:', currentPage);
+        console.log('Limit:', limit);
+        console.log('Params object:', Object.fromEntries(params));
+        console.log('Params string:', params.toString());
+        console.log('Full URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        const data = await response.json();
+        console.log('Raw response data:', data);
+        console.log('Orders array:', data.data);
+        console.log('Orders count:', data.data?.length || 0);
+        console.log('Total pages:', data.totalPages);
+        console.log('Current page from response:', data.page);
+        
+        // Handle different response formats
         if (Array.isArray(data)) {
           setOrders(data);
-          setTotalPages(1);
+          setTotalPages(Math.ceil(data.length / limit));
         } else {
-          setOrders(data.orders || []);
+          setOrders(data.data || data.orders || []);
           setTotalPages(data.totalPages || 1);
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
       }
     };
-    fetchOrders();
-  }, []);
+    const timeoutId = setTimeout(() => {
+      fetchOrders();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, limit, searchTerm]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm]);
+
+  const handleSearch = async () => {
+    console.log('=== MANUAL SEARCH TRIGGERED ===');
+    console.log('Search term:', searchTerm);
+    
+    // Force a re-fetch with current search term
+    try {
+      const params = new URLSearchParams({
+        page: 1,
+        limit: limit
+      });
+      
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      const url = `${import.meta.env.VITE_API_URL}/orders?${params.toString()}`;
+      console.log('=== SEARCH DEBUG ===');
+      console.log('Search term (raw):', `"${searchTerm}"`);
+      console.log('Search term (trimmed):', `"${searchTerm.trim()}"`);
+      console.log('Search term length:', searchTerm.length);
+      console.log('Params entries:', [...params.entries()]);
+      console.log('Manual search URL:', url);
+      console.log('Expected URL should be:', `${import.meta.env.VITE_API_URL}/orders?search=mukesh&page=1&limit=10`);
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log('Manual search response:', data);
+      
+      if (Array.isArray(data)) {
+        setOrders(data);
+        setTotalPages(Math.ceil(data.length / limit));
+      } else {
+        setOrders(data.data || data.orders || []);
+        setTotalPages(data.totalPages || 1);
+      }
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('Error searching orders:', error);
+    }
+  };
 
   const handleCompleteOrder = async (orderId) => {
     try {
       await updateOrderById(orderId, { status: 'completed' });
-      // Refresh orders
-      const ordersData = await getAllOrders();
-      setOrders(ordersData);
+      refreshOrders();
     } catch (error) {
       console.error('Error completing order:', error);
     }
@@ -52,12 +130,25 @@ export default function OrderList({ onOpenCart }) {
     setShowAlert(true);
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (window.confirm('Are you sure you want to delete this order?')) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/${orderId}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          refreshOrders();
+        }
+      } catch (error) {
+        console.error('Error deleting order:', error);
+      }
+    }
+  };
+
   const confirmCancel = async () => {
     try {
       await updateOrderById(selectedOrderId, { status: 'cancelled' });
-      // Refresh orders
-      const ordersData = await getAllOrders();
-      setOrders(ordersData);
+      refreshOrders();
     } catch (error) {
       console.error('Error cancelling order:', error);
     }
@@ -66,42 +157,73 @@ export default function OrderList({ onOpenCart }) {
   };
 
   const refreshOrders = async () => {
-    const data = await getAllOrders();
+    const params = new URLSearchParams({
+      page: currentPage,
+      limit: limit
+    });
+    
+    if (searchTerm) params.append('search', searchTerm);
+    
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/orders?${params.toString()}`);
+    const data = await response.json();
+    
+    // Handle different response formats
     if (Array.isArray(data)) {
       setOrders(data);
+      setTotalPages(Math.ceil(data.length / limit));
     } else {
-      setOrders(data.orders || []);
+      setOrders(data.data || data.orders || []);
+      setTotalPages(data.totalPages || 1);
     }
   };
 
   const handlePrintKOT = (order) => {
     // Create KOT content
-    const kotContent = `
-=================================
-         KITCHEN ORDER TICKET
-=================================
-Order ID: #${order.orderId || order.id}
-Customer: ${order.customerName || 'Guest'}
-Mobile: ${order.customerMobile || 'N/A'}
-Date: ${order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString()}
-=================================
-ITEMS:
-${order.items?.map(item => `${item.qty}x ${item.itemName} - ₹${item.price}`).join('\n') || 'No items'}
-=================================
-Total Amount: ₹${order.totalPrice || 0}
-Status: ${order.status || 'pending'}
-=================================
-    `;
+    const kotContent = `================= KOT =================
+Order ID     : #${order._id || order.orderId || order.id}
+Customer     : ${order.customerName || 'Guest'}
+Mobile       : ${order.customerMobile || 'N/A'}
+Date & Time  : ${order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString()}
+========================================
+ITEMS
+----------------------------------------
+Qty     Item Name                Amount
+----------------------------------------
+${order.items?.map(item => `${item.qty}       ${item.itemName.padEnd(20)}   ${item.price}`).join('\n') || 'No items'}
+----------------------------------------
+Total Amount:                    ${order.totalAmount || order.totalPrice || 0}
+Status      : ${order.status || 'pending'}
+========================================
+Thank you!
+========================================`;
     
     // Print KOT
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
-          <title>KOT - Order #${order.id}</title>
+          <title>KOT - Order #${order._id || order.id}</title>
           <style>
-            body { font-family: monospace; font-size: 12px; margin: 20px; }
-            pre { white-space: pre-wrap; }
+            @page { 
+              size: 80mm auto; 
+              margin: 4mm; 
+            }
+            body { 
+              font-family: 'Courier New', monospace; 
+              font-size: 12px; 
+              margin: 0; 
+              padding: 0;
+              width: 72mm;
+              line-height: 1.2;
+            }
+            pre { 
+              white-space: pre-wrap; 
+              margin: 0;
+              font-family: inherit;
+            }
+            @media print {
+              body { height: auto !important; }
+            }
           </style>
         </head>
         <body>
@@ -136,6 +258,26 @@ Status: ${order.status || 'pending'}
         </div>
       </div>
       
+      {/* Search Bar */}
+      <div className="px-6 mb-4">
+        <div className="max-w-md flex gap-2">
+          <input
+            type="text"
+            placeholder="Search orders..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Search
+          </button>
+        </div>
+      </div>
+
       {/* Table Container */}
       <div className="flex-1 overflow-y-auto px-6">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -152,13 +294,13 @@ Status: ${order.status || 'pending'}
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders && orders.length > 0 ? orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr key={order._id || order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleShowOrderDetails(order)}
                         className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
                       >
-                        #{order.id}
+                        #{order._id || order.id}
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -169,7 +311,7 @@ Status: ${order.status || 'pending'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">
-                      ₹{order.totalPrice || 0}
+                      ₹{order.totalAmount || order.totalPrice || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -193,7 +335,7 @@ Status: ${order.status || 'pending'}
                           Print KOT
                         </button>
                         <button
-                          onClick={() => handleCancelOrder(order.id)}
+                          onClick={() => handleCancelOrder(order._id || order.id)}
                           className="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-xs font-medium"
                           title="Cancel Order"
                           disabled={order.status === 'cancelled' || order.status === 'completed'}
@@ -219,11 +361,41 @@ Status: ${order.status || 'pending'}
               </tbody>
             </table>
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 py-4">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 border rounded ${
+                  currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
       
-
-
-
         {showAlert && (
           <AlertBox
             message="Are you sure you want to cancel this order?"
@@ -237,7 +409,7 @@ Status: ${order.status || 'pending'}
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Order Details - #{selectedOrder.id}</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Order Details - #{selectedOrder._id || selectedOrder.id}</h3>
                 <button
                   onClick={() => setShowOrderDetails(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -322,7 +494,7 @@ Status: ${order.status || 'pending'}
                   </button>
                   <button
                     onClick={() => {
-                      handleCancelOrder(selectedOrder.id);
+                      handleCancelOrder(selectedOrder._id || selectedOrder.id);
                       setShowOrderDetails(false);
                     }}
                     className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"

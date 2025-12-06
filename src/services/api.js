@@ -200,6 +200,7 @@ export const deleteMenuItem = async (id) => {
 // Orders API
 export const createOrder = async (orderData) => {
   try {
+    console.log('Sending order data to /api/orders:', orderData);
     const response = await fetch(`${BASE_URL}/orders`, {
       method: 'POST',
       headers: {
@@ -207,8 +208,14 @@ export const createOrder = async (orderData) => {
       },
       body: JSON.stringify(orderData),
     });
-    if (!response.ok) throw new Error('Failed to create order');
+    console.log('Order API response status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Order API error response:', errorText);
+      throw new Error('Failed to create order');
+    }
     const data = await response.json();
+    console.log('Order created successfully:', data);
     return mapIdField(data);
   } catch (error) {
     console.error('Error creating order:', error);

@@ -126,6 +126,7 @@ export default function ResponsivePOSLayout() {
             isOpen={true} 
             onClose={() => {}} 
             isDesktop={true}
+            onNavigateToOrders={() => setCurrentPage('orders')}
           />
         </div>
       )}
@@ -136,6 +137,7 @@ export default function ResponsivePOSLayout() {
           isOpen={isCartOpen} 
           onClose={() => setIsCartOpen(false)} 
           isDesktop={false}
+          onNavigateToOrders={() => setCurrentPage('orders')}
         />
       </div>
 

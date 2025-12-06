@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 
-export default function CartPanel({ onClose }) {
+export default function CartPanel({ onClose, onNavigateToOrders }) {
   const { cart, updateQuantity, removeFromCart, placeOrder } = usePosContext();
   const [notes, setNotes] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -16,10 +16,17 @@ export default function CartPanel({ onClose }) {
   };
 
   const confirmOrder = () => {
+    // Place order in background
     placeOrder(notes);
+    
     setNotes('');
     setShowConfirmation(false);
     if (onClose) onClose();
+    
+    // Navigate to All Orders page
+    if (onNavigateToOrders) {
+      onNavigateToOrders();
+    }
   };
 
   return (

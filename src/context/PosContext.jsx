@@ -148,15 +148,19 @@ export function PosProvider({ children }) {
   const updateCustomer = (data) => dispatch({ type: 'UPDATE_CUSTOMER', payload: data });
   const placeOrder = async (notes) => {
     try {
+      const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const payload = {
-        customerName: state.customer.name || 'Guest',
-        mobileNumber: state.customer.mobile || '',
-        items: state.cart,
-        totalAmount: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        paymentMethod: 'cash',
-        status: 'pending'
+        items: state.cart.map(item => ({
+          itemName: item.name,
+          qty: item.quantity,
+          price: item.price
+        })),
+        totalAmount: totalAmount,
+        totalPrice: totalAmount,
+        status: 'Completed'
       };
 
+      console.log('Order payload:', payload);
       await createOrder(payload);
       dispatch({ type: 'PLACE_ORDER', payload: { notes } });
       return { success: true, message: 'Order placed successfully!' };

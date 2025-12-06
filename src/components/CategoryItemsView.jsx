@@ -123,7 +123,6 @@ export default function CategoryItemsView({ selectedCategory }) {
   };
 
   const handleAddToOrder = (item) => {
-    const quantity = itemQuantities[item._id] || 1;
     const cartItem = {
       id: item._id,
       name: item.itemName,
@@ -131,13 +130,7 @@ export default function CategoryItemsView({ selectedCategory }) {
       category: selectedCategory
     };
     
-    // Add to cart multiple times based on quantity
-    for (let i = 0; i < quantity; i++) {
-      addToCart(cartItem);
-    }
-    
-    setItemQuantities({ ...itemQuantities, [item._id]: 1 });
-    alert(`Added ${quantity} ${item.itemName}(s) to cart!`);
+    addToCart(cartItem);
   };
 
   const updateQuantity = (itemId, quantity) => {
@@ -181,21 +174,7 @@ export default function CategoryItemsView({ selectedCategory }) {
                 <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName}</h3>
                 <p className="font-bold text-yellow-600 text-2xl mb-4">₹{item.price}</p>
                 
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <button
-                    onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) - 1)}
-                    className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-medium">{itemQuantities[item._id] || 1}</span>
-                  <button
-                    onClick={() => updateQuantity(item._id, (itemQuantities[item._id] || 1) + 1)}
-                    className="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center"
-                  >
-                    +
-                  </button>
-                </div>
+
                 
                 <button
                   onClick={() => handleAddToOrder(item)}
@@ -218,13 +197,13 @@ export default function CategoryItemsView({ selectedCategory }) {
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold">Create New Item</h3>
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setShowCreateCategory(true)}
                   className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                 >
                   + Category
-                </button>
+                </button> */}
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

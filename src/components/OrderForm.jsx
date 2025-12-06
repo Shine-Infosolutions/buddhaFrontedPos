@@ -16,7 +16,7 @@ export default function OrderForm({ onClose, onOrderCreated }) {
     fetchItems();
   }, []);
   const [formData, setFormData] = useState({
-    status: 'Pending'
+    status: 'Completed'
   });
   const [selectedItems, setSelectedItems] = useState([]);
 
@@ -104,7 +104,6 @@ export default function OrderForm({ onClose, onOrderCreated }) {
               onChange={(e) => setFormData({...formData, status: e.target.value})}
               className="border rounded-lg px-3 py-2 w-full"
             >
-              <option value="Pending">Pending</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
             </select>
