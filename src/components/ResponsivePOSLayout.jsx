@@ -68,9 +68,9 @@ export default function ResponsivePOSLayout() {
         />
       </div>
 
-      {/* Right Sidebar - Navigation (Mobile) */}
-      <div className={`lg:hidden fixed inset-y-0 right-0 z-40 w-64 transform transition-transform duration-300 ${
-        isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+      {/* Left Sidebar - Navigation (Mobile) */}
+      <div className={`lg:hidden fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <Sidebar 
           currentPage={currentPage}
@@ -100,10 +100,6 @@ export default function ResponsivePOSLayout() {
       <div className="flex-1 flex flex-col lg:border-r lg:border-gray-200 pt-16 lg:pt-0">
         {/* Mobile Header */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 bg-gray-900 flex items-center justify-between px-4 shadow-xl">
-          <div className="flex items-center gap-2">
-            <img src={logoImg} alt="Buddha Logo" className="h-7 w-auto drop-shadow-sm" />
-            <h1 className="text-sm font-bold tracking-widest uppercase text-white">BUDDHA AVENUE</h1>
-          </div>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 text-yellow-600 active:scale-95 transition-transform duration-200"
@@ -112,6 +108,10 @@ export default function ResponsivePOSLayout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <div className="flex items-center gap-2">
+            <img src={logoImg} alt="Buddha Logo" className="h-7 w-auto drop-shadow-sm" />
+            <h1 className="text-sm font-bold tracking-widest uppercase text-white">BUDDHA AVENUE</h1>
+          </div>
         </div>
 
 
