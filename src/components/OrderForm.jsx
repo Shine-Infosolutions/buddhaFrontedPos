@@ -6,7 +6,7 @@ export default function OrderForm({ onClose, onOrderCreated }) {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/items`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/items?limit=100`);
         const data = await response.json();
         setItems(Array.isArray(data) ? data : data.data || []);
       } catch (error) {
@@ -136,7 +136,7 @@ export default function OrderForm({ onClose, onOrderCreated }) {
                 >
                   <option value="">Select Item</option>
                   {items.map(menuItem => (
-                    <option key={menuItem._id} value={menuItem._id}>{menuItem.itemName} - ₹{menuItem.price}</option>
+                    <option key={menuItem._id} value={menuItem._id}>{menuItem.itemName?.replace(/"/g, '')} - ₹{menuItem.price}</option>
                   ))}
                   <option value="custom">Custom Item</option>
                 </select>

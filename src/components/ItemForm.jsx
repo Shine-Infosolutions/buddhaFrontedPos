@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ItemForm({ onClose, onItemCreated }) {
   const [formData, setFormData] = useState({
@@ -7,13 +7,21 @@ export default function ItemForm({ onClose, onItemCreated }) {
     price: '',
     qty: 1
   });
+  const [categories, setCategories] = useState([]);
 
-  const categories = [
-    { id: '507f1f77bcf86cd799439011', name: 'Beverages' },
-    { id: '507f1f77bcf86cd799439012', name: 'Snacks' },
-    { id: '507f1f77bcf86cd799439013', name: 'Mocktails' },
-    { id: '507f1f77bcf86cd799439014', name: 'Starters' }
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`);
+        const data = await response.json();
+        const allCats = Array.isArray(data) ? data : data.data || [];
+        setCategories(allCats);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +88,7 @@ export default function ItemForm({ onClose, onItemCreated }) {
             >
               <option value="">Select Category</option>
               {categories.map(category => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+                <option key={category._id} value={category._id}>{category.categoryName?.replace(/"/g, '')}</option>
               ))}
             </select>
           </div>

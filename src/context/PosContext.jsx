@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { getAllMenuItems, getAllCategories, createOrder, getAllOrders, getOrderById, updateOrder, deleteOrder, addCategory as apiAddCategory, addMenuItem, updateMenuItem, deleteMenuItem } from '../services/api';
 
 const PosContext = createContext();
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const initialState = {
   categories: [],
@@ -108,30 +108,38 @@ function posReducer(state, action) {
 export function PosProvider({ children }) {
   const [state, dispatch] = useReducer(posReducer, initialState);
 
-  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         dispatch({ type: 'SET_LOADING', payload: true });
-        console.log('Fetching menu data...');
         
-        const menuItems = await getAllMenuItems();
-        console.log('Menu items received:', menuItems);
+        const [itemsRes, catsRes] = await Promise.all([
+          fetch(`${BASE_URL}/items?limit=100`),
+          fetch(`${BASE_URL}/categories`)
+        ]);
         
-        const categoriesData = await getAllCategories();
-        console.log('Categories received:', categoriesData);
+        const itemsData = await itemsRes.json();
+        const catsData = await catsRes.json();
         
-        // Categories data is already an array of strings
-        console.log('Processed categories:', categoriesData);
+        const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+        const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+        
+        const catMap = new Map(allCats.map(cat => [cat._id, cat.categoryName]));
+        
+        const items = allItems.map(item => ({
+          id: item._id,
+          name: item.itemName,
+          category: catMap.get(item.categoryId) || 'Uncategorized',
+          price: item.price || 0,
+          available: item.isAvailable !== false
+        }));
+        
+        const categories = allCats.map(cat => cat.categoryName);
         
         dispatch({ 
           type: 'SET_MENU_DATA', 
-          payload: { 
-            items: menuItems, 
-            categories: categoriesData 
-          } 
+          payload: { items, categories } 
         });
-        console.log('Data set successfully');
       } catch (error) {
         console.error('Failed to fetch menu data:', error);
         dispatch({ type: 'SET_LOADING', payload: false });
@@ -160,8 +168,14 @@ export function PosProvider({ children }) {
         status: 'Completed'
       };
 
-      console.log('Order payload:', payload);
-      await createOrder(payload);
+      const response = await fetch(`${BASE_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create order');
+      
       dispatch({ type: 'PLACE_ORDER', payload: { notes } });
       return { success: true, message: 'Order placed successfully!' };
     } catch (error) {
@@ -172,32 +186,47 @@ export function PosProvider({ children }) {
   const cancelOrder = (id) => dispatch({ type: 'CANCEL_ORDER', payload: id });
   const fetchOrders = async () => {
     try {
-      const orders = await getAllOrders();
-      return orders;
+      const response = await fetch(`${BASE_URL}/orders`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const result = await response.json();
+      return result.data || result;
     } catch (error) {
       console.error('Failed to fetch orders:', error);
       return [];
     }
   };
+  
   const fetchOrderById = async (id) => {
     try {
-      return await getOrderById(id);
+      const response = await fetch(`${BASE_URL}/orders/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch order');
+      return await response.json();
     } catch (error) {
       console.error('Failed to fetch order:', error);
       throw error;
     }
   };
+  
   const updateOrderById = async (id, orderData) => {
     try {
-      return await updateOrder(id, orderData);
+      const response = await fetch(`${BASE_URL}/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+      if (!response.ok) throw new Error('Failed to update order');
+      return await response.json();
     } catch (error) {
       console.error('Failed to update order:', error);
       throw error;
     }
   };
+  
   const deleteOrderById = async (id) => {
     try {
-      return await deleteOrder(id);
+      const response = await fetch(`${BASE_URL}/orders/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete order');
+      return true;
     } catch (error) {
       console.error('Failed to delete order:', error);
       throw error;
@@ -206,54 +235,75 @@ export function PosProvider({ children }) {
 
   const addItem = async (itemData) => {
     try {
-      await addMenuItem({
-        categoryName: itemData.category,
-        itemName: itemData.name,
-        price: itemData.price,
-        qty: itemData.qty || 1,
-        isAvailable: itemData.available !== false
+      const response = await fetch(`${BASE_URL}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(itemData),
       });
+      if (!response.ok) throw new Error('Failed to add item');
       
       // Refresh data
-      const [menuItems, categoriesData] = await Promise.all([
-        getAllMenuItems(),
-        getAllCategories()
+      const [itemsRes, catsRes] = await Promise.all([
+        fetch(`${BASE_URL}/items?limit=100`),
+        fetch(`${BASE_URL}/categories`)
       ]);
-      dispatch({ 
-        type: 'SET_MENU_DATA', 
-        payload: { 
-          items: menuItems, 
-          categories: categoriesData 
-        } 
-      });
+      
+      const itemsData = await itemsRes.json();
+      const catsData = await catsRes.json();
+      const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+      const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+      const catMap = new Map(allCats.map(cat => [cat._id, cat.categoryName]));
+      
+      const items = allItems.map(item => ({
+        id: item._id,
+        name: item.itemName,
+        category: catMap.get(item.categoryId) || 'Uncategorized',
+        price: item.price || 0,
+        available: item.isAvailable !== false
+      }));
+      
+      const categories = allCats.map(cat => cat.categoryName);
+      
+      dispatch({ type: 'SET_MENU_DATA', payload: { items, categories } });
       return { success: true };
     } catch (error) {
       console.error('Failed to add item:', error);
       return { success: false, error: error.message };
     }
   };
+  
   const updateItem = async (id, itemData) => {
     try {
-      await updateMenuItem(id, {
-        categoryName: itemData.category,
-        itemName: itemData.name,
-        price: itemData.price,
-        qty: itemData.qty || 1,
-        isAvailable: itemData.available !== false
+      const response = await fetch(`${BASE_URL}/items/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(itemData),
       });
+      if (!response.ok) throw new Error('Failed to update item');
       
-      // Refresh data
-      const [menuItems, categoriesData] = await Promise.all([
-        getAllMenuItems(),
-        getAllCategories()
+      // Refresh data (same as addItem)
+      const [itemsRes, catsRes] = await Promise.all([
+        fetch(`${BASE_URL}/items?limit=100`),
+        fetch(`${BASE_URL}/categories`)
       ]);
-      dispatch({ 
-        type: 'SET_MENU_DATA', 
-        payload: { 
-          items: menuItems, 
-          categories: categoriesData 
-        } 
-      });
+      
+      const itemsData = await itemsRes.json();
+      const catsData = await catsRes.json();
+      const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+      const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+      const catMap = new Map(allCats.map(cat => [cat._id, cat.categoryName]));
+      
+      const items = allItems.map(item => ({
+        id: item._id,
+        name: item.itemName,
+        category: catMap.get(item.categoryId) || 'Uncategorized',
+        price: item.price || 0,
+        available: item.isAvailable !== false
+      }));
+      
+      const categories = allCats.map(cat => cat.categoryName);
+      
+      dispatch({ type: 'SET_MENU_DATA', payload: { items, categories } });
       return { success: true };
     } catch (error) {
       console.error('Failed to update item:', error);
@@ -263,41 +313,71 @@ export function PosProvider({ children }) {
   
   const deleteItem = async (id) => {
     try {
-      await deleteMenuItem(id);
+      const response = await fetch(`${BASE_URL}/items/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete item');
       
-      // Refresh data
-      const [menuItems, categoriesData] = await Promise.all([
-        getAllMenuItems(),
-        getAllCategories()
+      // Refresh data (same as addItem)
+      const [itemsRes, catsRes] = await Promise.all([
+        fetch(`${BASE_URL}/items?limit=100`),
+        fetch(`${BASE_URL}/categories`)
       ]);
-      dispatch({ 
-        type: 'SET_MENU_DATA', 
-        payload: { 
-          items: menuItems, 
-          categories: categoriesData 
-        } 
-      });
+      
+      const itemsData = await itemsRes.json();
+      const catsData = await catsRes.json();
+      const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+      const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+      const catMap = new Map(allCats.map(cat => [cat._id, cat.categoryName]));
+      
+      const items = allItems.map(item => ({
+        id: item._id,
+        name: item.itemName,
+        category: catMap.get(item.categoryId) || 'Uncategorized',
+        price: item.price || 0,
+        available: item.isAvailable !== false
+      }));
+      
+      const categories = allCats.map(cat => cat.categoryName);
+      
+      dispatch({ type: 'SET_MENU_DATA', payload: { items, categories } });
       return { success: true };
     } catch (error) {
       console.error('Failed to delete item:', error);
       return { success: false, error: error.message };
     }
   };
+  
   const addCategory = async (categoryName) => {
     try {
-      await apiAddCategory(categoryName);
-      // Refresh the data after adding category
-      const [menuItems, categoriesData] = await Promise.all([
-        getAllMenuItems(),
-        getAllCategories()
-      ]);
-      dispatch({ 
-        type: 'SET_MENU_DATA', 
-        payload: { 
-          items: menuItems, 
-          categories: categoriesData 
-        } 
+      const response = await fetch(`${BASE_URL}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryName }),
       });
+      if (!response.ok) throw new Error('Failed to add category');
+      
+      // Refresh data (same as addItem)
+      const [itemsRes, catsRes] = await Promise.all([
+        fetch(`${BASE_URL}/items?limit=100`),
+        fetch(`${BASE_URL}/categories`)
+      ]);
+      
+      const itemsData = await itemsRes.json();
+      const catsData = await catsRes.json();
+      const allItems = Array.isArray(itemsData) ? itemsData : itemsData.data || [];
+      const allCats = Array.isArray(catsData) ? catsData : catsData.data || [];
+      const catMap = new Map(allCats.map(cat => [cat._id, cat.categoryName]));
+      
+      const items = allItems.map(item => ({
+        id: item._id,
+        name: item.itemName,
+        category: catMap.get(item.categoryId) || 'Uncategorized',
+        price: item.price || 0,
+        available: item.isAvailable !== false
+      }));
+      
+      const categories = allCats.map(cat => cat.categoryName);
+      
+      dispatch({ type: 'SET_MENU_DATA', payload: { items, categories } });
       return { success: true };
     } catch (error) {
       console.error('Failed to add category:', error);

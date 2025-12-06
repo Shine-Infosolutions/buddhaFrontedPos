@@ -17,13 +17,13 @@ export default function CategoryItemsView({ selectedCategory }) {
 
   const [categories, setCategories] = useState([]);
 
-  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`);
         const data = await response.json();
-        setCategories(Array.isArray(data) ? data : data.data || []);
+        const allCats = Array.isArray(data) ? data : data.data || [];
+        setCategories(allCats);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
@@ -33,24 +33,27 @@ export default function CategoryItemsView({ selectedCategory }) {
 
   useEffect(() => {
     const fetchItems = async () => {
+      if (!selectedCategory || categories.length === 0) return;
+      
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/items`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/items?limit=100`);
         const data = await response.json();
         const allItems = Array.isArray(data) ? data : data.data || [];
         
-        // Distribute items by name patterns since categoryId is null
-        const categoryItems = {
-          'BEVERAGES': ['coffee', 'tea', 'juice', 'drink'],
-          'SNACKS': ['paneer', 'samosa', 'chips', 'kriti'],
-          'MOCKTAILS': ['mocktail', 'shake', 'smoothie', 'anshuu'],
-          'STARTERS': ['starter', 'appetizer', 'madhu', 'mukesh']
-        };
+        const matchedCategory = categories.find(cat => {
+          const catName = cat.categoryName?.replace(/"/g, '').toLowerCase();
+          const selCat = selectedCategory.replace(/"/g, '').toLowerCase();
+          return catName === selCat;
+        });
         
-        const keywords = categoryItems[selectedCategory.toUpperCase()] || [];
+        if (!matchedCategory) {
+          setItems([]);
+          return;
+        }
         
         const filteredItems = allItems.filter(item => {
-          const itemName = item.itemName.toLowerCase();
-          return keywords.some(keyword => itemName.includes(keyword.toLowerCase()));
+          const itemCatId = typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId;
+          return itemCatId === matchedCategory._id;
         });
         
         setItems(filteredItems);
@@ -60,9 +63,7 @@ export default function CategoryItemsView({ selectedCategory }) {
       }
     };
     
-    if (categories.length > 0) {
-      fetchItems();
-    }
+    fetchItems();
   }, [selectedCategory, categories]);
 
   const customerInfo = {
@@ -89,11 +90,28 @@ export default function CategoryItemsView({ selectedCategory }) {
       });
       
       if (response.ok) {
-        const newItem = await response.json();
-        setItems([...items, { ...itemData, _id: newItem._id || Date.now() }]);
         alert('Item created successfully!');
         setShowCreateItem(false);
         setFormData({ itemName: '', price: '', qty: 1, categoryId: '' });
+        
+        // Refresh items
+        const itemsResponse = await fetch(`${import.meta.env.VITE_API_URL}/items`);
+        const data = await itemsResponse.json();
+        const allItems = Array.isArray(data) ? data : data.data || [];
+        
+        const matchedCategory = categories.find(cat => {
+          const catName = cat.categoryName?.replace(/"/g, '').toLowerCase();
+          const selCat = selectedCategory.replace(/"/g, '').toLowerCase();
+          return catName === selCat;
+        });
+        
+        if (matchedCategory) {
+          const filteredItems = allItems.filter(item => {
+            const itemCatId = typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId;
+            return itemCatId === matchedCategory._id;
+          });
+          setItems(filteredItems);
+        }
       }
     } catch (error) {
       console.error('Error creating item:', error);
@@ -171,7 +189,7 @@ export default function CategoryItemsView({ selectedCategory }) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {items.map((item) => (
               <div key={item._id} className="bg-white rounded-lg p-4 shadow-sm border text-center">
-                <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName}</h3>
+                <h3 className="font-bold text-lg mb-2 uppercase">{item.itemName?.replace(/"/g, '')}</h3>
                 <p className="font-bold text-yellow-600 text-2xl mb-4">₹{item.price}</p>
                 
 

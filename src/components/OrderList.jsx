@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { usePosContext } from '../context/PosContext';
-import { getAllOrders } from '../services/api';
 import AlertBox from './AlertBox';
 import OrderForm from './OrderForm';
 import ItemForm from './ItemForm';
