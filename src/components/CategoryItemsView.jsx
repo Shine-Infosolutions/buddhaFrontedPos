@@ -146,11 +146,11 @@ export default function CategoryItemsView({ selectedCategory }) {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
+    <div className="bg-gray-50 h-full overflow-y-auto">
+      <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Customer Inputs */}
-        <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+        <div className="mb-4 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <input
               type="text"
               placeholder="Customer Name"
@@ -172,7 +172,7 @@ export default function CategoryItemsView({ selectedCategory }) {
 
 
         {/* Search Bar */}
-        <div className="px-4 md:px-6 mb-4">
+        <div className="mb-4">
           <input
             type="text"
             placeholder="Search items..."
@@ -211,7 +211,7 @@ export default function CategoryItemsView({ selectedCategory }) {
           </div>
         ) : (
           <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-            <div className="text-gray-500 text-lg mb-6">No items found in this category</div>
+            <div className="text-gray-500 text-lg">No items found in this category</div>
           </div>
         )}
 

@@ -38,7 +38,11 @@ export default function ResponsivePOSLayout() {
     
     // Show CategoryItemsView when a category is selected
     if (selectedCategory && selectedCategory !== 'all') {
-      return <CategoryItemsView selectedCategory={selectedCategory} />;
+      return (
+        <div className="flex-1 overflow-y-auto">
+          <CategoryItemsView selectedCategory={selectedCategory} />
+        </div>
+      );
     }
     
     return (
@@ -109,8 +113,8 @@ export default function ResponsivePOSLayout() {
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <img src={logoImg} alt="Buddha Logo" className="h-7 w-auto drop-shadow-sm" />
-            <h1 className="text-sm font-bold tracking-widest uppercase text-white">BUDDHA AVENUE</h1>
+            <img src={logoImg} alt="Buddha Logo" className="h-8 w-auto drop-shadow-lg" />
+            <h1 className="text-base font-bold tracking-widest uppercase text-white">BUDDHA AVENUE</h1>
           </div>
         </div>
 
