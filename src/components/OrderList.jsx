@@ -8,6 +8,7 @@ import logoImg from '../assets/buddha-logo.png';
 export default function OrderList({ onOpenCart }) {
   const { updateOrderById } = usePosContext();
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -50,6 +51,24 @@ export default function OrderList({ onOpenCart }) {
     
     return () => clearTimeout(timeoutId);
   }, [currentPage, limit, searchTerm]);
+
+  useEffect(() => {
+    const fetchAllOrders = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/orders?limit=10000`);
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          setAllOrders(data);
+        } else {
+          setAllOrders(data.data || data.orders || []);
+        }
+      } catch (error) {
+        console.error('Error fetching all orders:', error);
+      }
+    };
+    fetchAllOrders();
+  }, [orders]);
 
   // Reset to page 1 when search term changes
   useEffect(() => {
@@ -289,15 +308,15 @@ export default function OrderList({ onOpenCart }) {
     setShowOrderDetails(true);
   };
 
-  const totalOrders = orders.length;
-  const cancelledOrders = orders.filter(order => order.status?.toLowerCase() === 'cancelled').length;
-  const completedOrders = orders.filter(order => order.status?.toLowerCase() === 'completed').length;
-  const totalRevenue = orders
+  const totalOrders = allOrders.length;
+  const cancelledOrders = allOrders.filter(order => order.status?.toLowerCase() === 'cancelled').length;
+  const completedOrders = allOrders.filter(order => order.status?.toLowerCase() === 'completed').length;
+  const totalRevenue = allOrders
     .filter(order => order.status?.toLowerCase() === 'completed')
     .reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
-  const cashOrders = orders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Cash');
+  const cashOrders = allOrders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Cash');
   const cashPayments = cashOrders.reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
-  const onlineOrders = orders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Online');
+  const onlineOrders = allOrders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Online');
   const onlinePayments = onlineOrders.reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
 
   return (
@@ -529,17 +548,55 @@ export default function OrderList({ onOpenCart }) {
               Prev
             </button>
             
-            {[...Array(totalPages)].slice(0, 5).map((_, i) => (
+            {currentPage > 2 && (
               <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-2 md:px-3 py-1 text-xs md:text-base border rounded ${
-                  currentPage === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-                }`}
+                onClick={() => setCurrentPage(1)}
+                className="px-2 md:px-3 py-1 text-xs md:text-base border rounded hover:bg-gray-100"
               >
-                {i + 1}
+                1
               </button>
-            ))}
+            )}
+            
+            {currentPage > 3 && (
+              <span className="px-2 text-gray-500">...</span>
+            )}
+            
+            {currentPage > 1 && (
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="px-2 md:px-3 py-1 text-xs md:text-base border rounded hover:bg-gray-100"
+              >
+                {currentPage - 1}
+              </button>
+            )}
+            
+            <button
+              className="px-2 md:px-3 py-1 text-xs md:text-base border rounded bg-blue-600 text-white"
+            >
+              {currentPage}
+            </button>
+            
+            {currentPage < totalPages && (
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-2 md:px-3 py-1 text-xs md:text-base border rounded hover:bg-gray-100"
+              >
+                {currentPage + 1}
+              </button>
+            )}
+            
+            {currentPage < totalPages - 2 && (
+              <span className="px-2 text-gray-500">...</span>
+            )}
+            
+            {currentPage < totalPages - 1 && (
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                className="px-2 md:px-3 py-1 text-xs md:text-base border rounded hover:bg-gray-100"
+              >
+                {totalPages}
+              </button>
+            )}
             
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
