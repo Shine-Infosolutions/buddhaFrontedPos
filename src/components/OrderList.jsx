@@ -3,6 +3,7 @@ import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 import OrderForm from './OrderForm';
 import ItemForm from './ItemForm';
+import logoImg from '../assets/buddha-logo.png';
 
 export default function OrderList({ onOpenCart }) {
   const { updateOrderById } = usePosContext();
@@ -121,8 +122,20 @@ export default function OrderList({ onOpenCart }) {
   };
 
   const handlePrintKOT = (order) => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = '/buddha-logo.svg';
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const logoBase64 = canvas.toDataURL('image/png');
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
       <html>
         <head>
           <title>KOT</title>
@@ -174,7 +187,7 @@ export default function OrderList({ onOpenCart }) {
         </head>
         <body>
           <div class="header">
-            <img src="${window.location.origin}/src/assets/buddha-logo.png" alt="Buddha Logo" class="logo" onerror="this.style.display='none'" />
+            <img src="/buddha-logo.svg" alt="Buddha Logo" class="logo" />
             <div class="restaurant-name">BUDDHA AVENUE</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
@@ -207,8 +220,68 @@ export default function OrderList({ onOpenCart }) {
           </script>
         </body>
       </html>
-    `);
-    printWindow.document.close();
+      `);
+      printWindow.document.close();
+    };
+    
+    img.onerror = () => {
+      console.error('Logo failed to load');
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>KOT</title>
+            <style>
+              @page { size: 80mm auto; margin: 2mm; }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; padding: 2mm; line-height: 1.3; }
+              .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
+              .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
+              .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
+              .info { margin: 1mm 0; font-size: 11px; }
+              .items { margin: 3mm 0; }
+              .item-row { display: flex; justify-content: space-between; margin: 1.5mm 0; font-size: 11px; }
+              .footer { border-top: 2px dashed #000; padding-top: 3mm; margin-top: 3mm; text-align: center; font-size: 11px; }
+              @media print { body { width: 76mm; } }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="restaurant-name">BUDDHA AVENUE</div>
+              <div class="title">KOT</div>
+              <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
+              <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
+            </div>
+            <div class="info"><strong>Customer:</strong> ${order.customerName || 'Guest'}</div>
+            <div class="info"><strong>Mobile:</strong> ${order.customerMobile || 'N/A'}</div>
+            <div class="items">
+              <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+              ${order.items?.map(item => `
+                <div class="item-row">
+                  <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
+                  <span>₹${item.price}</span>
+                </div>
+              `).join('') || '<div>No items</div>'}
+              <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+            </div>
+            <div class="item-row" style="font-weight: bold; font-size: 14px;">
+              <span>TOTAL</span>
+              <span>₹${order.totalAmount || order.totalPrice || 0}</span>
+            </div>
+            <div class="footer">
+              <div><strong>Status:</strong> ${order.status || 'pending'}</div>
+              <div style="margin-top: 2mm;">Thank You!</div>
+            </div>
+            <script>
+              window.onload = function() {
+                setTimeout(function() { window.print(); }, 250);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
   };
 
   const handleShowOrderDetails = (order) => {
