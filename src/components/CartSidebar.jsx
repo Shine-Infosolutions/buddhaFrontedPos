@@ -9,6 +9,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderMessage, setOrderMessage] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -19,7 +20,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
 
   const confirmOrder = async () => {
     setIsPlacingOrder(true);
-    const result = await placeOrder(notes, customer);
+    const result = await placeOrder(notes, customer, paymentMethod);
     
     setOrderMessage(result.message);
     setIsPlacingOrder(false);
@@ -273,6 +274,18 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Online">Online</option>
+              </select>
+            </div>
+
             {orderMessage && (
               <div className={`text-center p-2 rounded-lg mb-3 text-sm ${orderMessage.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {orderMessage}
@@ -418,6 +431,18 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
                 <span>Total</span>
                 <span className="text-yellow-600">₹{total}</span>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Online">Online</option>
+              </select>
             </div>
 
             {orderMessage && (

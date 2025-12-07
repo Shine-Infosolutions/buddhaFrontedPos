@@ -155,7 +155,7 @@ export function PosProvider({ children }) {
   const removeFromCart = (id) => dispatch({ type: 'REMOVE_FROM_CART', payload: id });
   const clearCart = () => dispatch({ type: 'CLEAR_CART' });
   const updateCustomer = (data) => dispatch({ type: 'UPDATE_CUSTOMER', payload: data });
-  const placeOrder = async (notes, customerInfo) => {
+  const placeOrder = async (notes, customerInfo, paymentMethod = 'Cash') => {
     try {
       console.log('Current customer state:', state.customer);
       const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -169,7 +169,8 @@ export function PosProvider({ children }) {
         })),
         totalAmount: totalAmount,
         totalPrice: totalAmount,
-        status: 'Completed'
+        status: 'Completed',
+        paymentMethod: paymentMethod
       };
 
       console.log('Order Payload:', payload);

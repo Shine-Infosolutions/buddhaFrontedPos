@@ -289,6 +289,17 @@ export default function OrderList({ onOpenCart }) {
     setShowOrderDetails(true);
   };
 
+  const totalOrders = orders.length;
+  const cancelledOrders = orders.filter(order => order.status?.toLowerCase() === 'cancelled').length;
+  const completedOrders = orders.filter(order => order.status?.toLowerCase() === 'completed').length;
+  const totalRevenue = orders
+    .filter(order => order.status?.toLowerCase() === 'completed')
+    .reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
+  const cashOrders = orders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Cash');
+  const cashPayments = cashOrders.reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
+  const onlineOrders = orders.filter(order => order.status?.toLowerCase() === 'completed' && order.paymentMethod === 'Online');
+  const onlinePayments = onlineOrders.reduce((sum, order) => sum + (order.totalAmount || order.totalPrice || 0), 0);
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Header Section */}
@@ -304,6 +315,36 @@ export default function OrderList({ onOpenCart }) {
           >
             Create Order
           </button>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mt-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-xs md:text-sm text-gray-600 mb-1">Total Orders</div>
+            <div className="text-xl md:text-2xl font-bold text-gray-800">{totalOrders}</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-xs md:text-sm text-gray-600 mb-1">Completed</div>
+            <div className="text-xl md:text-2xl font-bold text-green-600">{completedOrders}</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-xs md:text-sm text-gray-600 mb-1">Cancelled</div>
+            <div className="text-xl md:text-2xl font-bold text-red-600">{cancelledOrders}</div>
+          </div>
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow p-4 text-white">
+            <div className="text-xs md:text-sm mb-1 opacity-90">Total Revenue</div>
+            <div className="text-xl md:text-2xl font-bold">₹{totalRevenue}</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-xs md:text-sm text-gray-600 mb-1">Cash</div>
+            <div className="text-lg md:text-xl font-bold text-blue-600">₹{cashPayments}</div>
+            <div className="text-xs text-gray-500 mt-1">{cashOrders.length} orders</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-xs md:text-sm text-gray-600 mb-1">Online</div>
+            <div className="text-lg md:text-xl font-bold text-purple-600">₹{onlinePayments}</div>
+            <div className="text-xs text-gray-500 mt-1">{onlineOrders.length} orders</div>
+          </div>
         </div>
       </div>
       
@@ -356,8 +397,11 @@ export default function OrderList({ onOpenCart }) {
                   {order.items?.length > 2 && '...'}
                 </div>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-sm text-gray-600">Payment: {order.paymentMethod || 'Cash'}</div>
                 <div className="text-lg font-bold text-gray-900">₹{order.totalAmount || order.totalPrice || 0}</div>
+              </div>
+              <div className="flex justify-between items-center">
                 <div className="flex gap-2">
                   <button
                     onClick={() => handlePrintKOT(order)}
@@ -394,6 +438,7 @@ export default function OrderList({ onOpenCart }) {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date&Time</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -419,6 +464,9 @@ export default function OrderList({ onOpenCart }) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">
                       ₹{order.totalAmount || order.totalPrice || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-700">{order.paymentMethod || 'Cash'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -454,7 +502,7 @@ export default function OrderList({ onOpenCart }) {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -553,6 +601,10 @@ export default function OrderList({ onOpenCart }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Date</label>
                     <p className="text-gray-900">{selectedOrder.orderDateTime ? new Date(selectedOrder.orderDateTime).toLocaleString() : selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                    <p className="text-gray-900">{selectedOrder.paymentMethod || 'Cash'}</p>
                   </div>
                 </div>
                 
