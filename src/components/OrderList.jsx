@@ -352,7 +352,7 @@ export default function OrderList({ onOpenCart }) {
               <div className="text-sm text-gray-700 mb-2">
                 <div>{order.items?.length || 0} items</div>
                 <div className="text-xs text-gray-500">
-                  {order.items?.slice(0, 2).map(item => item.itemName).join(', ')}
+                  {order.items?.slice(0, 2).map(item => `${item.qty}x ${item.itemName}`).join(', ')}
                   {order.items?.length > 2 && '...'}
                 </div>
               </div>
@@ -413,7 +413,7 @@ export default function OrderList({ onOpenCart }) {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{order.items?.length || 0} items</div>
                       <div className="text-xs text-gray-500">
-                        {order.items?.slice(0, 2).map(item => item.itemName).join(', ')}
+                        {order.items?.slice(0, 2).map(item => `${item.qty}x ${item.itemName}`).join(', ')}
                         {order.items?.length > 2 && '...'}
                       </div>
                     </td>
