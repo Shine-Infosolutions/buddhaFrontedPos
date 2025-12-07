@@ -174,7 +174,7 @@ export default function OrderList({ onOpenCart }) {
         </head>
         <body>
           <div class="header">
-            <img src="/buddha-logo.svg" alt="Buddha Logo" class="logo" />
+            <img src="${window.location.origin}/src/assets/buddha-logo.png" alt="Buddha Logo" class="logo" onerror="this.style.display='none'" />
             <div class="restaurant-name">BUDDHA AVENUE</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(order._id || order.id).slice(-8)}</div>

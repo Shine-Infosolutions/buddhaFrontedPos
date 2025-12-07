@@ -52,6 +52,8 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; padding: 2mm; line-height: 1.3; }
             .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
+            .logo { width: 20mm; height: 20mm; margin: 0 auto 2mm; }
+            .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
             .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
             .info { margin: 1mm 0; font-size: 11px; }
             .items { margin: 3mm 0; }
@@ -62,6 +64,8 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
         </head>
         <body>
           <div class="header">
+            <img src="${window.location.origin}/src/assets/buddha-logo.png" alt="Buddha Logo" class="logo" onerror="this.style.display='none'" />
+            <div class="restaurant-name">BUDDHA AVENUE</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(order._id || order.id || '').slice(-8)}</div>
             <div class="info">${new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
