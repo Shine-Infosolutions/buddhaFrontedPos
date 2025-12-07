@@ -200,7 +200,7 @@ export default function OrderList({ onOpenCart }) {
             ${order.items?.map(item => `
               <div class="item-row">
                 <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
-                <span>₹${item.price}</span>
+                <span>₹${item.qty * item.price}</span>
               </div>
             `).join('') || '<div>No items</div>'}
             <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
@@ -259,7 +259,7 @@ export default function OrderList({ onOpenCart }) {
               ${order.items?.map(item => `
                 <div class="item-row">
                   <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
-                  <span>₹${item.price}</span>
+                  <span>₹${item.qty * item.price}</span>
                 </div>
               `).join('') || '<div>No items</div>'}
               <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
