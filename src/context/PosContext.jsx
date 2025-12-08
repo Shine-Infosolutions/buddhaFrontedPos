@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
 
 const PosContext = createContext();
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://buddha-po-sbackend.vercel.app/api';
 
 const initialState = {
   categories: [],
