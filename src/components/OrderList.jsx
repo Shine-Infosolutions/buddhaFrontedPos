@@ -322,7 +322,7 @@ export default function OrderList({ onOpenCart }) {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Header Section */}
-      <div className="flex-none p-4 md:p-6">
+      <div className="flex-none p-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">All Orders</h1>
@@ -368,7 +368,7 @@ export default function OrderList({ onOpenCart }) {
       </div>
       
       {/* Search Bar */}
-      <div className="px-4 md:px-6 mb-4">
+      <div className="px-4 mb-4">
         <div className="max-w-md flex gap-2">
           <input
             type="text"
@@ -388,7 +388,7 @@ export default function OrderList({ onOpenCart }) {
       </div>
 
       {/* Orders Container */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6">
+      <div className="flex-1 overflow-auto px-4 pb-4 min-h-0">
         {/* Mobile Card View */}
         <div className="md:hidden space-y-3">
           {orders && orders.length > 0 ? orders.map((order) => (
@@ -449,7 +449,7 @@ export default function OrderList({ onOpenCart }) {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden md:block bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="hidden md:block bg-white rounded-lg shadow-lg overflow-hidden w-full">
           <div className="overflow-x-auto">
           <table className="w-full">
               <thead className="bg-gray-50">
