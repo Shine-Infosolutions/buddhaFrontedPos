@@ -19,6 +19,8 @@ export default function OrderList({ onOpenCart }) {
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showItemForm, setShowItemForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showEditOrder, setShowEditOrder] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -308,6 +310,11 @@ export default function OrderList({ onOpenCart }) {
     setShowOrderDetails(true);
   };
 
+  const handleEditOrder = (order) => {
+    setEditingOrder(order);
+    setShowEditOrder(true);
+  };
+
   const totalOrders = allOrders.length;
   const cancelledOrders = allOrders.filter(order => order.status?.toLowerCase() === 'cancelled').length;
   const completedOrders = allOrders.filter(order => order.status?.toLowerCase() === 'completed').length;
@@ -322,11 +329,11 @@ export default function OrderList({ onOpenCart }) {
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       {/* Header Section */}
-      <div className="flex-none p-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div className="flex-none p-2 sm:p-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">All Orders</h1>
-            <p className="text-sm md:text-base text-gray-600">Manage and track all restaurant orders</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">All Orders</h1>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">Manage and track all restaurant orders</p>
           </div>
           <button
             onClick={() => setShowOrderForm(true)}
@@ -337,38 +344,38 @@ export default function OrderList({ onOpenCart }) {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mt-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-xs md:text-sm text-gray-600 mb-1">Total Orders</div>
-            <div className="text-xl md:text-2xl font-bold text-gray-800">{totalOrders}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-2">
+          <div className="bg-white rounded shadow p-2">
+            <div className="text-[10px] text-gray-600 mb-0.5">Total</div>
+            <div className="text-base sm:text-lg md:text-xl font-bold text-gray-800">{totalOrders}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-xs md:text-sm text-gray-600 mb-1">Completed</div>
-            <div className="text-xl md:text-2xl font-bold text-green-600">{completedOrders}</div>
+          <div className="bg-white rounded shadow p-2">
+            <div className="text-[10px] text-gray-600 mb-0.5">Done</div>
+            <div className="text-base sm:text-lg md:text-xl font-bold text-green-600">{completedOrders}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-xs md:text-sm text-gray-600 mb-1">Cancelled</div>
-            <div className="text-xl md:text-2xl font-bold text-red-600">{cancelledOrders}</div>
+          <div className="bg-white rounded shadow p-2">
+            <div className="text-[10px] text-gray-600 mb-0.5">Cancel</div>
+            <div className="text-base sm:text-lg md:text-xl font-bold text-red-600">{cancelledOrders}</div>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow p-4 text-white">
-            <div className="text-xs md:text-sm mb-1 opacity-90">Total Revenue</div>
-            <div className="text-xl md:text-2xl font-bold">₹{totalRevenue}</div>
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded shadow p-2 text-white">
+            <div className="text-[10px] mb-0.5 opacity-90">Revenue</div>
+            <div className="text-base sm:text-lg md:text-xl font-bold">₹{totalRevenue}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-xs md:text-sm text-gray-600 mb-1">Cash</div>
-            <div className="text-lg md:text-xl font-bold text-blue-600">₹{cashPayments}</div>
-            <div className="text-xs text-gray-500 mt-1">{cashOrders.length} orders</div>
+          <div className="bg-white rounded shadow p-2">
+            <div className="text-[10px] text-gray-600 mb-0.5">Cash</div>
+            <div className="text-sm sm:text-base md:text-lg font-bold text-blue-600">₹{cashPayments}</div>
+            <div className="text-[9px] text-gray-500">{cashOrders.length} ord</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-xs md:text-sm text-gray-600 mb-1">Online</div>
-            <div className="text-lg md:text-xl font-bold text-purple-600">₹{onlinePayments}</div>
-            <div className="text-xs text-gray-500 mt-1">{onlineOrders.length} orders</div>
+          <div className="bg-white rounded shadow p-2">
+            <div className="text-[10px] text-gray-600 mb-0.5">Online</div>
+            <div className="text-sm sm:text-base md:text-lg font-bold text-purple-600">₹{onlinePayments}</div>
+            <div className="text-[9px] text-gray-500">{onlineOrders.length} ord</div>
           </div>
         </div>
       </div>
       
       {/* Search Bar */}
-      <div className="px-4 mb-4">
+      <div className="px-2 sm:px-4 mb-2">
         <div className="max-w-md flex gap-2">
           <input
             type="text"
@@ -388,9 +395,9 @@ export default function OrderList({ onOpenCart }) {
       </div>
 
       {/* Orders Container */}
-      <div className="flex-1 overflow-auto px-4 pb-4 min-h-0">
-        {/* Mobile Card View */}
-        <div className="md:hidden space-y-3">
+      <div className="flex-1 overflow-auto px-2 sm:px-4 pb-2 sm:pb-4 min-h-0">
+        {/* Mobile/Tablet Card View */}
+        <div className="xl:hidden space-y-3">
           {orders && orders.length > 0 ? orders.map((order) => (
             <div key={order._id || order.id} className="bg-white rounded-lg shadow p-4">
               <div className="flex justify-between items-start mb-2">
@@ -421,7 +428,13 @@ export default function OrderList({ onOpenCart }) {
                 <div className="text-lg font-bold text-gray-900">₹{order.totalAmount || order.totalPrice || 0}</div>
               </div>
               <div className="flex justify-between items-center">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => handleEditOrder(order)}
+                    className="bg-green-100 text-green-600 px-3 py-1 rounded text-xs font-medium"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handlePrintKOT(order)}
                     className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-medium"
@@ -449,8 +462,8 @@ export default function OrderList({ onOpenCart }) {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden md:block bg-white rounded-lg shadow-lg overflow-hidden w-full">
-          <div className="overflow-x-auto">
+        <div className="hidden xl:block bg-white rounded-lg shadow-lg overflow-hidden w-full">
+          <div className="overflow-x-auto scrollbar-visible" style={{scrollbarWidth: 'auto', scrollbarColor: '#cbd5e0 #f7fafc'}}>
           <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
@@ -501,6 +514,13 @@ export default function OrderList({ onOpenCart }) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditOrder(order)}
+                          className="bg-green-100 text-green-600 hover:bg-green-200 px-2 py-1 rounded text-xs font-medium"
+                          title="Edit Order"
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={() => handlePrintKOT(order)}
                           className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded text-xs font-medium"
@@ -737,6 +757,146 @@ export default function OrderList({ onOpenCart }) {
             onClose={() => setShowItemForm(false)}
             onItemCreated={() => console.log('Item created')}
           />
+        )}
+
+        {/* Edit Order Modal */}
+        {showEditOrder && editingOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Edit Order</h3>
+                <button
+                  onClick={() => setShowEditOrder(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/${editingOrder._id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editingOrder)
+                  });
+                  if (response.ok) {
+                    refreshOrders();
+                    setShowEditOrder(false);
+                  }
+                } catch (error) {
+                  console.error('Error updating order:', error);
+                }
+              }}>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                      <input
+                        type="text"
+                        value={editingOrder.customerName || ''}
+                        onChange={(e) => setEditingOrder({...editingOrder, customerName: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                      <input
+                        type="text"
+                        value={editingOrder.customerMobile || ''}
+                        onChange={(e) => setEditingOrder({...editingOrder, customerMobile: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <select
+                        value={editingOrder.status || 'Completed'}
+                        onChange={(e) => setEditingOrder({...editingOrder, status: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                      <select
+                        value={editingOrder.paymentMethod || 'Cash'}
+                        onChange={(e) => setEditingOrder({...editingOrder, paymentMethod: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Order Items</label>
+                    {editingOrder.items?.map((item, index) => (
+                      <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={item.itemName}
+                          onChange={(e) => {
+                            const newItems = [...editingOrder.items];
+                            newItems[index].itemName = e.target.value;
+                            setEditingOrder({...editingOrder, items: newItems});
+                          }}
+                          className="col-span-2 px-3 py-2 border rounded-lg"
+                          placeholder="Item name"
+                        />
+                        <input
+                          type="number"
+                          value={item.qty}
+                          onChange={(e) => {
+                            const newItems = [...editingOrder.items];
+                            newItems[index].qty = parseInt(e.target.value);
+                            setEditingOrder({...editingOrder, items: newItems});
+                          }}
+                          className="px-3 py-2 border rounded-lg"
+                          placeholder="Qty"
+                          min="1"
+                        />
+                        <input
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => {
+                            const newItems = [...editingOrder.items];
+                            newItems[index].price = parseFloat(e.target.value);
+                            setEditingOrder({...editingOrder, items: newItems});
+                          }}
+                          className="px-3 py-2 border rounded-lg"
+                          placeholder="Price"
+                          step="0.01"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditOrder(false)}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
     </div>
   );
