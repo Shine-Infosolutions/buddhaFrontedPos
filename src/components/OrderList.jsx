@@ -404,9 +404,9 @@ export default function OrderList({ onOpenCart }) {
       </div>
 
       {/* Orders Container */}
-      <div className="flex-1 overflow-auto px-2 sm:px-4 pb-2 sm:pb-4 min-h-0">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-4 pb-2 sm:pb-4 min-h-0">
         {/* Mobile/Tablet Card View */}
-        <div className="xl:hidden space-y-3">
+        <div className="2xl:hidden space-y-3">
           {orders && orders.length > 0 ? orders.map((order) => (
             <div key={order._id || order.id} className="bg-white rounded-lg shadow p-4">
               <div className="flex justify-between items-start mb-2">
@@ -426,10 +426,14 @@ export default function OrderList({ onOpenCart }) {
                 {order.orderDateTime ? new Date(order.orderDateTime).toLocaleString() : order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
               </div>
               <div className="text-sm text-gray-700 mb-2">
-                <div>{order.items?.length || 0} items</div>
-                <div className="text-xs text-gray-500">
-                  {order.items?.slice(0, 2).map(item => `${item.qty}x ${item.itemName}`).join(', ')}
-                  {order.items?.length > 2 && '...'}
+                <div className="font-medium mb-1">Items ({order.items?.length || 0}):</div>
+                <div className="space-y-1">
+                  {order.items?.map((item, idx) => (
+                    <div key={idx} className="text-xs text-gray-600 flex justify-between">
+                      <span>{item.qty}x {item.itemName}</span>
+                      <span className="font-medium">₹{item.qty * item.price}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="flex justify-between items-center mb-2">
@@ -471,18 +475,18 @@ export default function OrderList({ onOpenCart }) {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden xl:block bg-white rounded-lg shadow-lg overflow-hidden w-full">
-          <div className="overflow-x-auto scrollbar-visible" style={{scrollbarWidth: 'auto', scrollbarColor: '#cbd5e0 #f7fafc'}}>
-          <table className="w-full">
+        <div className="hidden 2xl:block bg-white rounded-lg shadow-lg w-full mb-4">
+          <div className="overflow-x-auto scrollbar-visible block" style={{width: '100%'}}>
+          <table className="w-full" style={{minWidth: '1200px'}}>
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Items</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date&Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -496,12 +500,13 @@ export default function OrderList({ onOpenCart }) {
                         #{order._id || order.id}
                       </button>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{order.items?.length || 0} items</div>
-                      <div className="text-xs text-gray-500">
-                        {order.items?.slice(0, 2).map(item => `${item.qty}x ${item.itemName}`).join(', ')}
-                        {order.items?.length > 2 && '...'}
-                      </div>
+                    <td className="px-6 py-4 min-w-[200px]">
+                      <div className="text-sm text-gray-900 mb-1">{order.items?.length || 0} items</div>
+                      <ul className="text-xs text-gray-500 list-disc list-inside space-y-0.5">
+                        {order.items?.map((item, idx) => (
+                          <li key={idx}>{item.qty}x {item.itemName}</li>
+                        ))}
+                      </ul>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">
                       ₹{order.totalAmount || order.totalPrice || 0}
@@ -522,24 +527,24 @@ export default function OrderList({ onOpenCart }) {
                       {order.orderDateTime ? new Date(order.orderDateTime).toLocaleString() : order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-1 flex-nowrap">
                         <button
                           onClick={() => handleEditOrder(order)}
-                          className="bg-green-100 text-green-600 hover:bg-green-200 px-2 py-1 rounded text-xs font-medium"
+                          className="bg-green-100 text-green-600 hover:bg-green-200 px-2 py-1 rounded text-[10px] font-medium"
                           title="Edit Order"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handlePrintKOT(order)}
-                          className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded text-xs font-medium"
+                          className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded text-[10px] font-medium"
                           title="Print KOT"
                         >
-                          Print KOT
+                          Print
                         </button>
                         <button
                           onClick={() => handleCancelOrder(order._id || order.id)}
-                          className="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-xs font-medium"
+                          className="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-[10px] font-medium"
                           title="Cancel Order"
                           disabled={order.status === 'cancelled' || order.status === 'completed'}
                         >
@@ -827,12 +832,12 @@ export default function OrderList({ onOpenCart }) {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                       <select
-                        value={editingOrder.status || 'Completed'}
+                        value={editingOrder.status || 'completed'}
                         onChange={(e) => setEditingOrder({...editingOrder, status: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg"
                       >
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
                     <div>

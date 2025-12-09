@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Force scrollbars to always be visible */
+.scrollbar-visible {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #94a3b8 #e2e8f0 !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  display: block !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #e2e8f0 !important;
+  border-radius: 0 !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #94a3b8 !important;
+  border-radius: 6px !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #64748b !important;
+}
