@@ -21,6 +21,8 @@ export default function OrderList({ onOpenCart }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showEditOrder, setShowEditOrder] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [availableItems, setAvailableItems] = useState([]);
+  const [itemSearch, setItemSearch] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -310,9 +312,16 @@ export default function OrderList({ onOpenCart }) {
     setShowOrderDetails(true);
   };
 
-  const handleEditOrder = (order) => {
-    setEditingOrder(order);
+  const handleEditOrder = async (order) => {
+    setEditingOrder(JSON.parse(JSON.stringify(order)));
     setShowEditOrder(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/items?limit=1000`);
+      const data = await response.json();
+      setAvailableItems(Array.isArray(data) ? data : data.data || []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    }
   };
 
   const totalOrders = allOrders.length;
@@ -766,7 +775,11 @@ export default function OrderList({ onOpenCart }) {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Edit Order</h3>
                 <button
-                  onClick={() => setShowEditOrder(false)}
+                  onClick={() => {
+                    setShowEditOrder(false);
+                    setEditingOrder(null);
+                    setItemSearch('');
+                  }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -778,13 +791,22 @@ export default function OrderList({ onOpenCart }) {
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 try {
+                  const totalPrice = editingOrder.items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+                  const updatedOrder = {
+                    ...editingOrder,
+                    totalPrice: totalPrice,
+                    totalAmount: totalPrice
+                  };
                   const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/${editingOrder._id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(editingOrder)
+                    body: JSON.stringify(updatedOrder)
                   });
                   if (response.ok) {
-                    refreshOrders();
+                    await refreshOrders();
+                    const allOrdersResponse = await fetch(`${import.meta.env.VITE_API_URL}/orders?limit=10000`);
+                    const allOrdersData = await allOrdersResponse.json();
+                    setAllOrders(Array.isArray(allOrdersData) ? allOrdersData : allOrdersData.data || []);
                     setShowEditOrder(false);
                   }
                 } catch (error) {
@@ -792,22 +814,13 @@ export default function OrderList({ onOpenCart }) {
                 }
               }}>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
                       <input
                         type="text"
                         value={editingOrder.customerName || ''}
                         onChange={(e) => setEditingOrder({...editingOrder, customerName: e.target.value})}
-                        className="w-full px-3 py-2 border rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                      <input
-                        type="text"
-                        value={editingOrder.customerMobile || ''}
-                        onChange={(e) => setEditingOrder({...editingOrder, customerMobile: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg"
                       />
                     </div>
@@ -836,20 +849,63 @@ export default function OrderList({ onOpenCart }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Order Items</label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Order Items</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItems = [...(editingOrder.items || []), { itemName: '', qty: 1, price: 0 }];
+                          setEditingOrder({...editingOrder, items: newItems});
+                        }}
+                        className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                      >
+                        + Add Item
+                      </button>
+                    </div>
                     {editingOrder.items?.map((item, index) => (
-                      <div key={index} className="grid grid-cols-4 gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={item.itemName}
-                          onChange={(e) => {
-                            const newItems = [...editingOrder.items];
-                            newItems[index].itemName = e.target.value;
-                            setEditingOrder({...editingOrder, items: newItems});
-                          }}
-                          className="col-span-2 px-3 py-2 border rounded-lg"
-                          placeholder="Item name"
-                        />
+                      <div key={index} className="grid grid-cols-12 gap-2 mb-2">
+                        <div className="col-span-5 relative">
+                          <input
+                            type="text"
+                            value={item.itemName}
+                            onChange={(e) => {
+                              const newItems = [...editingOrder.items];
+                              newItems[index].itemName = e.target.value;
+                              setEditingOrder({...editingOrder, items: newItems});
+                              setItemSearch(e.target.value);
+                            }}
+                            className="w-full px-3 py-2 border rounded-lg"
+                            placeholder="Search item..."
+                          />
+                          {itemSearch && availableItems.filter(i => 
+                            i.itemName?.toLowerCase().includes(itemSearch.toLowerCase())
+                          ).length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {availableItems
+                                .filter(i => i.itemName?.toLowerCase().includes(itemSearch.toLowerCase()))
+                                .slice(0, 5)
+                                .map((availItem) => (
+                                  <div
+                                    key={availItem._id}
+                                    onClick={() => {
+                                      const newItems = [...editingOrder.items];
+                                      newItems[index] = {
+                                        itemName: availItem.itemName,
+                                        qty: newItems[index].qty || 1,
+                                        price: availItem.price
+                                      };
+                                      setEditingOrder({...editingOrder, items: newItems});
+                                      setItemSearch('');
+                                    }}
+                                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                  >
+                                    {availItem.itemName} - ₹{availItem.price}
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )}
+                        </div>
                         <input
                           type="number"
                           value={item.qty}
@@ -858,7 +914,7 @@ export default function OrderList({ onOpenCart }) {
                             newItems[index].qty = parseInt(e.target.value);
                             setEditingOrder({...editingOrder, items: newItems});
                           }}
-                          className="px-3 py-2 border rounded-lg"
+                          className="col-span-2 px-3 py-2 border rounded-lg"
                           placeholder="Qty"
                           min="1"
                         />
@@ -870,10 +926,20 @@ export default function OrderList({ onOpenCart }) {
                             newItems[index].price = parseFloat(e.target.value);
                             setEditingOrder({...editingOrder, items: newItems});
                           }}
-                          className="px-3 py-2 border rounded-lg"
+                          className="col-span-3 px-3 py-2 border rounded-lg"
                           placeholder="Price"
                           step="0.01"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newItems = editingOrder.items.filter((_, i) => i !== index);
+                            setEditingOrder({...editingOrder, items: newItems});
+                          }}
+                          className="col-span-2 bg-red-100 text-red-600 px-2 py-2 rounded hover:bg-red-200 text-sm"
+                        >
+                          Remove
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -881,7 +947,11 @@ export default function OrderList({ onOpenCart }) {
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
-                      onClick={() => setShowEditOrder(false)}
+                      onClick={() => {
+                        setShowEditOrder(false);
+                        setEditingOrder(null);
+                        setItemSearch('');
+                      }}
                       className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                     >
                       Cancel
