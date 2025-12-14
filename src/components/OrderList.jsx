@@ -3,12 +3,13 @@ import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 import OrderForm from './OrderForm';
 import ItemForm from './ItemForm';
-import PrinterSetup from './PrinterSetup';
-import printService from '../services/printService';
+import { usePrint } from '../hooks/usePrint';
+
 import logoImg from '../assets/buddha-logo.png';
 
 export default function OrderList({ onOpenCart }) {
   const { updateOrderById } = usePosContext();
+  const { printReceipt, connectToQZ, isConnected } = usePrint();
   const [orders, setOrders] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
@@ -25,7 +26,7 @@ export default function OrderList({ onOpenCart }) {
   const [editingOrder, setEditingOrder] = useState(null);
   const [availableItems, setAvailableItems] = useState([]);
   const [itemSearch, setItemSearch] = useState('');
-  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
+
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -147,7 +148,7 @@ export default function OrderList({ onOpenCart }) {
     }
   };
 
-  const handleBrowserPrint = (order) => {
+  const handlePrint = (order) => {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
@@ -197,7 +198,6 @@ export default function OrderList({ onOpenCart }) {
             window.onload = function() {
               setTimeout(function() { 
                 window.print();
-                setTimeout(function() { window.print(); }, 1000);
               }, 250);
             };
           </script>
@@ -207,17 +207,7 @@ export default function OrderList({ onOpenCart }) {
     printWindow.document.close();
   };
 
-  const handleQZPrint = async (order) => {
-    try {
-      const success = await printService.printKOT(order);
-      if (!success) {
-        alert('QZ Print failed. Please check if QZ Tray is running and printer is connected.');
-      }
-    } catch (error) {
-      console.error('QZ Print error:', error);
-      alert('QZ Print failed. Please check if QZ Tray is running and printer is connected.');
-    }
-  };
+
 
   const handleShowOrderDetails = (order) => {
     setSelectedOrder(order);
@@ -257,12 +247,7 @@ export default function OrderList({ onOpenCart }) {
             <p className="text-xs sm:text-sm md:text-base text-gray-600">Manage and track all restaurant orders</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setShowPrinterSetup(true)}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
-            >
-              Printer Setup
-            </button>
+
             <button
               onClick={() => setShowOrderForm(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
@@ -369,17 +354,33 @@ export default function OrderList({ onOpenCart }) {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleBrowserPrint(order)}
+                    onClick={() => handlePrint(order)}
                     className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-medium"
                   >
                     Print
                   </button>
                   <button
-                    onClick={() => handleQZPrint(order)}
+                    onClick={async () => {
+                      if (!isConnected) await connectToQZ();
+                      const receiptData = {
+                        storeName: 'Buddha POS',
+                        orderNumber: (order._id || order.id).slice(-8),
+                        items: order.items || [],
+                        total: order.totalAmount || order.totalPrice || 0,
+                        tax: 0,
+                        timestamp: new Date(order.createdAt || Date.now()).toLocaleString()
+                      };
+                      try {
+                        await printReceipt(receiptData);
+                      } catch (error) {
+                        alert('QZ Print failed: ' + error.message);
+                      }
+                    }}
                     className="bg-purple-100 text-purple-600 px-3 py-1 rounded text-xs font-medium"
                   >
                     QZ Print
                   </button>
+
                   <button
                     onClick={() => handleCancelOrder(order._id || order.id)}
                     className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-medium"
@@ -462,19 +463,35 @@ export default function OrderList({ onOpenCart }) {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleBrowserPrint(order)}
+                          onClick={() => handlePrint(order)}
                           className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded text-[10px] font-medium"
-                          title="Browser Print"
+                          title="Print KOT"
                         >
                           Print
                         </button>
                         <button
-                          onClick={() => handleQZPrint(order)}
+                          onClick={async () => {
+                            if (!isConnected) await connectToQZ();
+                            const receiptData = {
+                              storeName: 'Buddha POS',
+                              orderNumber: (order._id || order.id).slice(-8),
+                              items: order.items || [],
+                              total: order.totalAmount || order.totalPrice || 0,
+                              tax: 0,
+                              timestamp: new Date(order.createdAt || Date.now()).toLocaleString()
+                            };
+                            try {
+                              await printReceipt(receiptData);
+                            } catch (error) {
+                              alert('QZ Print failed: ' + error.message);
+                            }
+                          }}
                           className="bg-purple-100 text-purple-600 hover:bg-purple-200 px-2 py-1 rounded text-[10px] font-medium"
                           title="QZ Tray Print"
                         >
-                          QZ
+                          QZ Print
                         </button>
+
                         <button
                           onClick={() => handleCancelOrder(order._id || order.id)}
                           className="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-[10px] font-medium"
@@ -671,17 +688,12 @@ export default function OrderList({ onOpenCart }) {
                 
                 <div className="flex space-x-3 pt-4">
                   <button
-                    onClick={() => handleBrowserPrint(selectedOrder)}
+                    onClick={() => handlePrint(selectedOrder)}
                     className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Print KOT
                   </button>
-                  <button
-                    onClick={() => handleQZPrint(selectedOrder)}
-                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    QZ Print
-                  </button>
+
                   <button
                     onClick={() => {
                       handleCancelOrder(selectedOrder._id || selectedOrder.id);
@@ -712,12 +724,7 @@ export default function OrderList({ onOpenCart }) {
           />
         )}
 
-        {showPrinterSetup && (
-          <PrinterSetup
-            isOpen={showPrinterSetup}
-            onClose={() => setShowPrinterSetup(false)}
-          />
-        )}
+
 
         {/* Edit Order Modal */}
         {showEditOrder && editingOrder && (
