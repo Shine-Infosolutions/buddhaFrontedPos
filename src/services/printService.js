@@ -9,40 +9,35 @@ class PrintService {
   async connect() {
     try {
       if (!qz.websocket.isActive()) {
-        // Set certificate to avoid anonymous requests
-        qz.security.setCertificatePromise(function(resolve, reject) {
-          const certificate = `-----BEGIN CERTIFICATE-----
-MIIECzCCAvOgAwIBAgIGAZsclEMTMA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG
-EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS
-UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx
-HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg
-RGVtbyBDZXJ0MB4XDTI1MTIxMzExMTcxN1oXDTQ1MTIxMzExMTcxN1owgaIxCzAJ
-BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD
-VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs
-IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog
-VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC4
-BMyblxudDAHWHDeMTiBAfItttXYBk7DqmKGF/DzVkOKkZHYZoZ3cD2GIE8ykdBzQ
-zMNha7oDvj3LPvHH2rewRjdBcE4Iyx+w5FhfcrgnGwvZ1wAU143fVSCsTyoXiS+e
-KpOKepf7JmFY2ztWOW0ZFMBOGD7bCM2UMWI0MbNTsT5gV4IfIlwsEA9l7NQJ/ELu
-BjsxS0omER3yRN9FUNvf+HRlD+iqP1714DexkFkPWpvQNE0GtD30h22O/hg+/BB4
-VESkyhnC6IHGF7yglD0ApXgWZ885D2bNGIVqG2xQbl/TDNYMZ4wW3pyz/zQS0HUN
-rrXKpIAe6vdFqVdYvSILAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD
-VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBQkb7FqNI/3OUWKbDSEAUt9Cq96ezANBgkq
-hkiG9w0BAQsFAAOCAQEAZQ4R5PPvX7hpzjFYLBfX9IkcV3P1bg9YV07nMELoMbOR
-8RXSpni0bf4fdHtxOYbVsYSd8/pK6k1ajhfGQgsj1aFQ1Lec4Hx2XHhTwBgi3M9r
-Qh13bN5sX8mhdtaNaH6Q9hGY/6n3ZvRErH2sqcVX42Eyr8usjDBhM2e62KZLUUWY
-UFkFI4a4viE0y0TM52o44vX419rhhABdFTubY5D3d5gKN/J1a0vWqGlefCi+lotc
-njrpliA5iGpjKeBUs+LrXYTm/qxfty3Lv6PWdfAxiGOxnY0lJWOXeXV9Sg5KFRtZ
-4gAGgwBcsi3fkem8EXkxx1qLcjuQTz3ygl017xoxSw==
------END CERTIFICATE-----`;
-          resolve(certificate);
+        // Check if jsrsasign is available
+        if (typeof KJUR === 'undefined') {
+          console.error('jsrsasign library not loaded');
+          throw new Error('jsrsasign library required for signing');
+        }
+
+        // Load certificate from public folder
+        qz.security.setCertificatePromise(() => {
+          return fetch('/digital-certificate.txt')
+            .then(response => response.text())
+            .then(cert => {
+              console.log('Certificate loaded from public folder');
+              return cert;
+            });
         });
 
         qz.security.setSignatureAlgorithm('SHA512');
         qz.security.setSignaturePromise(function(toSign) {
           return function(resolve, reject) {
-            // Use external signing service or return empty signature
-            resolve('');
+            fetch('/private-key.pem')
+              .then(response => response.text())
+              .then(privateKey => {
+                console.log('Private key loaded from public folder, signing...');
+                const sig = new KJUR.crypto.Signature({"alg": "SHA512withRSA"});
+                sig.init(privateKey);
+                sig.updateString(toSign);
+                resolve(stob64(sig.sign()));
+              })
+              .catch(reject);
           };
         });
 
@@ -78,24 +73,22 @@ njrpliA5iGpjKeBUs+LrXYTm/qxfty3Lv6PWdfAxiGOxnY0lJWOXeXV9Sg5KFRtZ
       if (!this.printerName) {
         const printers = await this.findPrinters();
         if (printers.length > 0) {
-          this.printerName = printers[0];
+          // Try to find XPS printer first, then PDF, then any printer
+          this.printerName = printers.find(p => p.toLowerCase().includes('xps')) || 
+                           printers.find(p => p.toLowerCase().includes('pdf')) || 
+                           printers[0];
         } else {
           throw new Error('No printers found');
         }
       }
 
-      const kotData = this.generateKOTData(order);
-      
       const config = qz.configs.create(this.printerName);
       const data = [{
-        type: 'raw',
+        type: 'html',
         format: 'plain',
-        data: kotData
+        data: this.generateKOTHTML(order)
       }];
 
-      // Print first copy
-      await qz.print(config, data);
-      // Print second copy
       await qz.print(config, data);
       return true;
     } catch (error) {
@@ -163,6 +156,38 @@ njrpliA5iGpjKeBUs+LrXYTm/qxfty3Lv6PWdfAxiGOxnY0lJWOXeXV9Sg5KFRtZ
       </html>
     `);
     printWindow.document.close();
+  }
+
+  generateKOTHTML(order) {
+    return `
+      <html>
+        <head>
+          <style>
+            @page { size: 80mm auto; margin: 2mm; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="center bold">BUDDHA AVENUE</div>
+          <div class="center">================================</div>
+          <div class="center bold">KOT</div>
+          <div>Order #: ${(order._id || order.id).slice(-8)}</div>
+          <div>Date: ${new Date(order.createdAt || Date.now()).toLocaleString('en-IN')}</div>
+          <div>Customer: ${order.customerName || 'Guest'}</div>
+          <div>Mobile: ${order.customerMobile || 'N/A'}</div>
+          <div>================================</div>
+          ${order.items?.map(item => `
+            <div>${item.qty}x ${item.itemName} - Rs.${item.qty * item.price}</div>
+          `).join('') || '<div>No items</div>'}
+          <div>================================</div>
+          <div class="bold">TOTAL: Rs.${order.totalAmount || order.totalPrice || 0}</div>
+          <div>Status: ${order.status || 'pending'}</div>
+          <div class="center">Thank You!</div>
+        </body>
+      </html>
+    `;
   }
 
   generateKOTData(order) {
