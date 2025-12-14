@@ -69,7 +69,12 @@ class QZTrayService {
       const config = qz.configs.create(printer);
       const data = this.formatReceiptData(receiptData);
       
-      await qz.print(config, data);
+      // Print two KOTs simultaneously
+      await Promise.all([
+        qz.print(config, data),
+        qz.print(config, data)
+      ]);
+      
       return true;
     } catch (error) {
       console.log('Mock print (error):', receiptData);
