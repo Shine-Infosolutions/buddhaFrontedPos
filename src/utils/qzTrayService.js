@@ -54,14 +54,16 @@ class QZTrayService {
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
-          console.log('Mock print (no QZ Tray):', receiptData);
+          console.log('Mock print KOT #1:', receiptData);
+          console.log('Mock print KOT #2:', receiptData);
           return true;
         }
       }
 
       const printers = await this.getPrinters();
       if (printers.length === 0) {
-        console.log('Mock print (no printers):', receiptData);
+        console.log('Mock print KOT #1 (no printers):', receiptData);
+        console.log('Mock print KOT #2 (no printers):', receiptData);
         return true;
       }
 
@@ -77,7 +79,8 @@ class QZTrayService {
       
       return true;
     } catch (error) {
-      console.log('Mock print (error):', receiptData);
+      console.log('Mock print KOT #1 (error):', receiptData);
+      console.log('Mock print KOT #2 (error):', receiptData);
       return true;
     }
   }
