@@ -81,16 +81,17 @@ class QZTrayService {
     } = receiptData;
 
     return [
+      { type: 'image', data: '/buddha-logo.png', options: { align: 'center' } },
       `\n${storeName}\n`,
       '================================\n',
       `Order #: ${orderNumber}\n`,
       `Date: ${timestamp}\n`,
       '--------------------------------\n',
-      ...items.map(item => `${item.name.padEnd(20)} ${item.quantity}x $${item.price.toFixed(2)}\n`),
+      ...items.map(item => `${(item.itemName || item.name).padEnd(20)} ${item.qty || item.quantity}x ₹${item.price.toFixed(2)}\n`),
       '--------------------------------\n',
-      `Subtotal: $${(total - tax).toFixed(2)}\n`,
-      `Tax: $${tax.toFixed(2)}\n`,
-      `Total: $${total.toFixed(2)}\n`,
+      `Subtotal: ₹${(total - tax).toFixed(2)}\n`,
+      `Tax: ₹${tax.toFixed(2)}\n`,
+      `Total: ₹${total.toFixed(2)}\n`,
       '================================\n',
       'Thank you!\n\n\n'
     ];
