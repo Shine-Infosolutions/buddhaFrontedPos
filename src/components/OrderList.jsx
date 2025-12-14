@@ -3,6 +3,8 @@ import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 import OrderForm from './OrderForm';
 import ItemForm from './ItemForm';
+import PrinterSetup from './PrinterSetup';
+import printService from '../services/printService';
 import logoImg from '../assets/buddha-logo.png';
 
 export default function OrderList({ onOpenCart }) {
@@ -23,6 +25,7 @@ export default function OrderList({ onOpenCart }) {
   const [editingOrder, setEditingOrder] = useState(null);
   const [availableItems, setAvailableItems] = useState([]);
   const [itemSearch, setItemSearch] = useState('');
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -144,77 +147,31 @@ export default function OrderList({ onOpenCart }) {
     }
   };
 
-  const handlePrintKOT = (order) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = '/buddha-logo.svg';
-    
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const logoBase64 = canvas.toDataURL('image/png');
-      
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
+  const handleBrowserPrint = (order) => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
       <html>
         <head>
           <title>KOT</title>
           <style>
-            @page { 
-              size: 80mm auto; 
-              margin: 2mm; 
-            }
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body { 
-              font-family: 'Courier New', monospace; 
-              font-size: 12px; 
-              width: 76mm;
-              padding: 2mm;
-              line-height: 1.3;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px dashed #000;
-              padding-bottom: 3mm;
-              margin-bottom: 3mm;
-            }
-            .logo { width: 20mm; height: 20mm; margin: 0 auto 2mm; }
+            @page { size: 80mm auto; margin: 2mm; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; padding: 2mm; line-height: 1.3; }
+            .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
             .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
             .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
             .info { margin: 1mm 0; font-size: 11px; }
             .items { margin: 3mm 0; }
-            .item-row { 
-              display: flex; 
-              justify-content: space-between; 
-              margin: 1.5mm 0; 
-              font-size: 11px;
-            }
-            .footer {
-              border-top: 2px dashed #000;
-              padding-top: 3mm;
-              margin-top: 3mm;
-              text-align: center;
-              font-size: 11px;
-            }
-            @media print {
-              body { width: 76mm; }
-            }
+            .item-row { display: flex; justify-content: space-between; margin: 1.5mm 0; font-size: 11px; }
+            .footer { border-top: 2px dashed #000; padding-top: 3mm; margin-top: 3mm; text-align: center; font-size: 11px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <img src="/buddha-logo.svg" alt="Buddha Logo" class="logo" />
             <div class="restaurant-name">BUDDHA AVENUE</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
-            <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
+            <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN')}</div>
           </div>
           <div class="info"><strong>Customer:</strong> ${order.customerName || 'Guest'}</div>
           <div class="info"><strong>Mobile:</strong> ${order.customerMobile || 'N/A'}</div>
@@ -222,7 +179,7 @@ export default function OrderList({ onOpenCart }) {
             <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
             ${order.items?.map(item => `
               <div class="item-row">
-                <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
+                <span>${item.qty}x ${item.itemName}</span>
                 <span>₹${item.qty * item.price}</span>
               </div>
             `).join('') || '<div>No items</div>'}
@@ -243,68 +200,20 @@ export default function OrderList({ onOpenCart }) {
           </script>
         </body>
       </html>
-      `);
-      printWindow.document.close();
-    };
-    
-    img.onerror = () => {
-      console.error('Logo failed to load');
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>KOT</title>
-            <style>
-              @page { size: 80mm auto; margin: 2mm; }
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; padding: 2mm; line-height: 1.3; }
-              .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
-              .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
-              .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
-              .info { margin: 1mm 0; font-size: 11px; }
-              .items { margin: 3mm 0; }
-              .item-row { display: flex; justify-content: space-between; margin: 1.5mm 0; font-size: 11px; }
-              .footer { border-top: 2px dashed #000; padding-top: 3mm; margin-top: 3mm; text-align: center; font-size: 11px; }
-              @media print { body { width: 76mm; } }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="restaurant-name">BUDDHA AVENUE</div>
-              <div class="title">KOT</div>
-              <div class="info">Order #${(order._id || order.id).slice(-8)}</div>
-              <div class="info">${new Date(order.createdAt || Date.now()).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</div>
-            </div>
-            <div class="info"><strong>Customer:</strong> ${order.customerName || 'Guest'}</div>
-            <div class="info"><strong>Mobile:</strong> ${order.customerMobile || 'N/A'}</div>
-            <div class="items">
-              <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
-              ${order.items?.map(item => `
-                <div class="item-row">
-                  <span>${item.qty}x ${item.itemName?.replace(/"/g, '')}</span>
-                  <span>₹${item.qty * item.price}</span>
-                </div>
-              `).join('') || '<div>No items</div>'}
-              <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
-            </div>
-            <div class="item-row" style="font-weight: bold; font-size: 14px;">
-              <span>TOTAL</span>
-              <span>₹${order.totalAmount || order.totalPrice || 0}</span>
-            </div>
-            <div class="footer">
-              <div><strong>Status:</strong> ${order.status || 'pending'}</div>
-              <div style="margin-top: 2mm;">Thank You!</div>
-            </div>
-            <script>
-              window.onload = function() {
-                setTimeout(function() { window.print(); }, 250);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    };
+    `);
+    printWindow.document.close();
+  };
+
+  const handleQZPrint = async (order) => {
+    try {
+      const success = await printService.printKOT(order);
+      if (!success) {
+        alert('QZ Print failed. Please check if QZ Tray is running and printer is connected.');
+      }
+    } catch (error) {
+      console.error('QZ Print error:', error);
+      alert('QZ Print failed. Please check if QZ Tray is running and printer is connected.');
+    }
   };
 
   const handleShowOrderDetails = (order) => {
@@ -344,12 +253,20 @@ export default function OrderList({ onOpenCart }) {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">All Orders</h1>
             <p className="text-xs sm:text-sm md:text-base text-gray-600">Manage and track all restaurant orders</p>
           </div>
-          <button
-            onClick={() => setShowOrderForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
-          >
-            Create Order
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowPrinterSetup(true)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
+            >
+              Printer Setup
+            </button>
+            <button
+              onClick={() => setShowOrderForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base whitespace-nowrap"
+            >
+              Create Order
+            </button>
+          </div>
         </div>
 
         {/* Statistics Cards */}
@@ -449,10 +366,16 @@ export default function OrderList({ onOpenCart }) {
                     Edit
                   </button>
                   <button
-                    onClick={() => handlePrintKOT(order)}
+                    onClick={() => handleBrowserPrint(order)}
                     className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-medium"
                   >
                     Print
+                  </button>
+                  <button
+                    onClick={() => handleQZPrint(order)}
+                    className="bg-purple-100 text-purple-600 px-3 py-1 rounded text-xs font-medium"
+                  >
+                    QZ Print
                   </button>
                   <button
                     onClick={() => handleCancelOrder(order._id || order.id)}
@@ -536,11 +459,18 @@ export default function OrderList({ onOpenCart }) {
                           Edit
                         </button>
                         <button
-                          onClick={() => handlePrintKOT(order)}
+                          onClick={() => handleBrowserPrint(order)}
                           className="bg-blue-100 text-blue-600 hover:bg-blue-200 px-2 py-1 rounded text-[10px] font-medium"
-                          title="Print KOT"
+                          title="Browser Print"
                         >
                           Print
+                        </button>
+                        <button
+                          onClick={() => handleQZPrint(order)}
+                          className="bg-purple-100 text-purple-600 hover:bg-purple-200 px-2 py-1 rounded text-[10px] font-medium"
+                          title="QZ Tray Print"
+                        >
+                          QZ
                         </button>
                         <button
                           onClick={() => handleCancelOrder(order._id || order.id)}
@@ -738,10 +668,16 @@ export default function OrderList({ onOpenCart }) {
                 
                 <div className="flex space-x-3 pt-4">
                   <button
-                    onClick={() => handlePrintKOT(selectedOrder)}
+                    onClick={() => handleBrowserPrint(selectedOrder)}
                     className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Print KOT
+                  </button>
+                  <button
+                    onClick={() => handleQZPrint(selectedOrder)}
+                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    QZ Print
                   </button>
                   <button
                     onClick={() => {
@@ -770,6 +706,13 @@ export default function OrderList({ onOpenCart }) {
           <ItemForm
             onClose={() => setShowItemForm(false)}
             onItemCreated={() => console.log('Item created')}
+          />
+        )}
+
+        {showPrinterSetup && (
+          <PrinterSetup
+            isOpen={showPrinterSetup}
+            onClose={() => setShowPrinterSetup(false)}
           />
         )}
 
