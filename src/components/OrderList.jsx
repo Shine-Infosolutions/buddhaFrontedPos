@@ -3,13 +3,11 @@ import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
 import OrderForm from './OrderForm';
 import ItemForm from './ItemForm';
-import { usePrint } from '../hooks/usePrint';
 
 import logoImg from '../assets/buddha-logo.png';
 
 export default function OrderList({ onOpenCart }) {
   const { updateOrderById } = usePosContext();
-  const { printReceipt, connectToQZ, isConnected } = usePrint();
   const [orders, setOrders] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
@@ -149,8 +147,7 @@ export default function OrderList({ onOpenCart }) {
   };
 
   const handlePrint = (order) => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const kotHTML = `
       <html>
         <head>
           <title>KOT</title>
@@ -194,17 +191,34 @@ export default function OrderList({ onOpenCart }) {
             <div><strong>Status:</strong> ${order.status || 'pending'}</div>
             <div style="margin-top: 2mm;">Thank You!</div>
           </div>
-          <script>
-            window.onload = function() {
-              setTimeout(function() { 
-                window.print();
-              }, 250);
-            };
-          </script>
         </body>
       </html>
-    `);
-    printWindow.document.close();
+    `;
+    
+    // Create single window that prints twice
+    const printWindow = window.open('', '_blank');
+    
+    if (printWindow) {
+      const kotHTMLWithDoubleprint = kotHTML.replace(
+        '</body>',
+        `<script>
+          window.onload = function() {
+            // First print dialog
+            setTimeout(function() {
+              window.print();
+            }, 500);
+            
+            // Second print dialog
+            setTimeout(function() {
+              window.print();
+            }, 2000);
+          };
+        </script></body>`
+      );
+      
+      printWindow.document.write(kotHTMLWithDoubleprint);
+      printWindow.document.close();
+    }
   };
 
 
@@ -359,27 +373,6 @@ export default function OrderList({ onOpenCart }) {
                   >
                     Print
                   </button>
-                  <button
-                    onClick={async () => {
-                      if (!isConnected) await connectToQZ();
-                      const receiptData = {
-                        storeName: 'Buddha POS',
-                        orderNumber: (order._id || order.id).slice(-8),
-                        items: order.items || [],
-                        total: order.totalAmount || order.totalPrice || 0,
-                        tax: 0,
-                        timestamp: new Date(order.createdAt || Date.now()).toLocaleString()
-                      };
-                      try {
-                        await printReceipt(receiptData);
-                      } catch (error) {
-                        alert('QZ Print failed: ' + error.message);
-                      }
-                    }}
-                    className="bg-purple-100 text-purple-600 px-3 py-1 rounded text-xs font-medium"
-                  >
-                    QZ Print
-                  </button>
 
                   <button
                     onClick={() => handleCancelOrder(order._id || order.id)}
@@ -468,28 +461,6 @@ export default function OrderList({ onOpenCart }) {
                           title="Print KOT"
                         >
                           Print
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!isConnected) await connectToQZ();
-                            const receiptData = {
-                              storeName: 'Buddha POS',
-                              orderNumber: (order._id || order.id).slice(-8),
-                              items: order.items || [],
-                              total: order.totalAmount || order.totalPrice || 0,
-                              tax: 0,
-                              timestamp: new Date(order.createdAt || Date.now()).toLocaleString()
-                            };
-                            try {
-                              await printReceipt(receiptData);
-                            } catch (error) {
-                              alert('QZ Print failed: ' + error.message);
-                            }
-                          }}
-                          className="bg-purple-100 text-purple-600 hover:bg-purple-200 px-2 py-1 rounded text-[10px] font-medium"
-                          title="QZ Tray Print"
-                        >
-                          QZ Print
                         </button>
 
                         <button

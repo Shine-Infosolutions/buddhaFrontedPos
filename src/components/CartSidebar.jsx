@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { usePosContext } from '../context/PosContext';
 import AlertBox from './AlertBox';
-import printService from '../services/printService';
 import logoImg from '../assets/buddha-logo.png';
 
 export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavigateToOrders }) {
@@ -44,26 +43,89 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
     }
   };
 
-  const printKOT = async (order) => {
-    try {
-      const orderData = {
-        ...order,
-        items: cart.map(item => ({
-          itemName: item.name,
-          qty: item.quantity,
-          price: item.price
-        })),
-        totalAmount: total,
-        customerName: order.customerName || customer.name,
-        customerMobile: order.customerMobile || customer.mobile
-      };
+  const printKOT = (order) => {
+    const orderData = {
+      ...order,
+      items: cart.map(item => ({
+        itemName: item.name,
+        qty: item.quantity,
+        price: item.price
+      })),
+      totalAmount: total,
+      customerName: order.customerName || customer.name,
+      customerMobile: order.customerMobile || customer.mobile
+    };
+    
+    const kotHTML = `
+      <html>
+        <head>
+          <title>KOT</title>
+          <style>
+            @page { size: 80mm auto; margin: 2mm; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; width: 76mm; padding: 2mm; line-height: 1.3; }
+            .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
+            .restaurant-name { font-size: 16px; font-weight: bold; margin-bottom: 1mm; letter-spacing: 1px; }
+            .title { font-size: 18px; font-weight: bold; margin-bottom: 2mm; }
+            .info { margin: 1mm 0; font-size: 11px; }
+            .items { margin: 3mm 0; }
+            .item-row { display: flex; justify-content: space-between; margin: 1.5mm 0; font-size: 11px; }
+            .footer { border-top: 2px dashed #000; padding-top: 3mm; margin-top: 3mm; text-align: center; font-size: 11px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="restaurant-name">BUDDHA POS</div>
+            <div class="title">KOT</div>
+            <div class="info">Order #${(orderData._id || orderData.id || '').slice(-8)}</div>
+            <div class="info">${new Date().toLocaleString('en-IN')}</div>
+          </div>
+          <div class="info"><strong>Customer:</strong> ${orderData.customerName || 'Guest'}</div>
+          <div class="info"><strong>Mobile:</strong> ${orderData.customerMobile || 'N/A'}</div>
+          <div class="items">
+            <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+            ${orderData.items?.map(item => `
+              <div class="item-row">
+                <span>${item.qty}x ${item.itemName}</span>
+                <span>₹${item.qty * item.price}</span>
+              </div>
+            `).join('') || '<div>No items</div>'}
+            <div style="border-bottom: 1px solid #000; margin: 2mm 0;"></div>
+          </div>
+          <div class="item-row" style="font-weight: bold; font-size: 14px;">
+            <span>TOTAL</span>
+            <span>₹${orderData.totalAmount || 0}</span>
+          </div>
+          <div class="footer">
+            <div>Thank You!</div>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Create single window that prints twice
+    const printWindow = window.open('', '_blank');
+    
+    if (printWindow) {
+      const kotHTMLWithDoubleprint = kotHTML.replace(
+        '</body>',
+        `<script>
+          window.onload = function() {
+            // First print dialog
+            setTimeout(function() {
+              window.print();
+            }, 500);
+            
+            // Second print dialog
+            setTimeout(function() {
+              window.print();
+            }, 2000);
+          };
+        </script></body>`
+      );
       
-      const success = await printService.printKOT(orderData);
-      if (!success) {
-        console.warn('QZ Tray print failed, order placed successfully');
-      }
-    } catch (error) {
-      console.error('Print error:', error);
+      printWindow.document.write(kotHTMLWithDoubleprint);
+      printWindow.document.close();
     }
   };
 
