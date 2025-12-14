@@ -75,6 +75,7 @@ export default function CartSidebar({ isOpen, onClose, isDesktop = false, onNavi
         </head>
         <body>
           <div class="header">
+            <img src="/buddha-logo.png" alt="Buddha Logo" style="width: 60px; height: 60px; margin: 0 auto 5px; display: block;">
             <div class="restaurant-name">BUDDHA POS</div>
             <div class="title">KOT</div>
             <div class="info">Order #${(orderData._id || orderData.id || '').slice(-8)}</div>
