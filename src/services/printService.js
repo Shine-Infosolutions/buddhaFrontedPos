@@ -56,6 +56,9 @@ class PrintService {
         data: kotData
       }];
 
+      // Print first copy
+      await qz.print(config, data);
+      // Print second copy
       await qz.print(config, data);
       return true;
     } catch (error) {
@@ -113,7 +116,10 @@ class PrintService {
           </div>
           <script>
             window.onload = function() {
-              setTimeout(function() { window.print(); }, 250);
+              setTimeout(function() { 
+                window.print();
+                setTimeout(function() { window.print(); }, 1000);
+              }, 250);
             };
           </script>
         </body>

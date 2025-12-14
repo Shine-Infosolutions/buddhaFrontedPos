@@ -195,7 +195,10 @@ export default function OrderList({ onOpenCart }) {
           </div>
           <script>
             window.onload = function() {
-              setTimeout(function() { window.print(); }, 250);
+              setTimeout(function() { 
+                window.print();
+                setTimeout(function() { window.print(); }, 1000);
+              }, 250);
             };
           </script>
         </body>
