@@ -7,28 +7,35 @@ class QZTrayService {
   }
 
   async connect() {
-    if (this.isConnected || qz.websocket.isActive()) return true;
+    if (this.isConnected) return true;
 
     try {
-      qz.security.setCertificatePromise(function(resolve, reject) {
-        resolve();
-      });
-      
-      qz.security.setSignaturePromise(function(toSign, resolve, reject) {
-        resolve();
-      });
-
-      if (!qz.websocket.isActive()) {
-        await qz.websocket.connect();
+      if (typeof qz === 'undefined' || !qz.websocket) {
+        console.log('QZ Tray not available, using mock mode');
+        return false;
       }
-      this.isConnected = true;
-      return true;
-    } catch (error) {
-      if (error.message.includes('already exists')) {
+
+      if (qz.websocket.isActive()) {
         this.isConnected = true;
         return true;
       }
-      console.log('QZ Tray not available, using mock mode');
+
+      // Disable security for localhost development
+      qz.security.setCertificatePromise(function(resolve) {
+        resolve();
+      });
+      
+      qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve) {
+          resolve();
+        };
+      });
+
+      await qz.websocket.connect();
+      this.isConnected = true;
+      return true;
+    } catch (error) {
+      console.log('QZ Tray connection error:', error.message);
       return false;
     }
   }
